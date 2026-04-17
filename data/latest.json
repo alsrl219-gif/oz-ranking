@@ -1,0 +1,204 @@
+{
+  "snapshots": [
+    {
+      "channelId": "musinsa",
+      "period": "realtime",
+      "scrapedAt": "2026-04-17T02:56:20.982Z",
+      "products": [],
+      "ozKidsEntries": [],
+      "error": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\User\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1217\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+    },
+    {
+      "channelId": "musinsa",
+      "period": "daily",
+      "scrapedAt": "2026-04-17T02:56:20.982Z",
+      "products": [],
+      "ozKidsEntries": [],
+      "error": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\User\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1217\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+    },
+    {
+      "channelId": "musinsa",
+      "period": "weekly",
+      "scrapedAt": "2026-04-17T02:56:20.982Z",
+      "products": [],
+      "ozKidsEntries": [],
+      "error": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\User\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1217\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+    },
+    {
+      "channelId": "musinsa",
+      "period": "monthly",
+      "scrapedAt": "2026-04-17T02:56:20.982Z",
+      "products": [],
+      "ozKidsEntries": [],
+      "error": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\User\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1217\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+    },
+    {
+      "channelId": "coupang",
+      "period": "realtime",
+      "scrapedAt": "2026-04-17T02:56:27.011Z",
+      "products": [],
+      "ozKidsEntries": [],
+      "error": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\User\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1217\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+    },
+    {
+      "channelId": "coupang",
+      "period": "daily",
+      "scrapedAt": "2026-04-17T02:56:27.011Z",
+      "products": [],
+      "ozKidsEntries": [],
+      "error": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\User\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1217\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+    },
+    {
+      "channelId": "coupang",
+      "period": "weekly",
+      "scrapedAt": "2026-04-17T02:56:27.011Z",
+      "products": [],
+      "ozKidsEntries": [],
+      "error": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\User\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1217\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+    },
+    {
+      "channelId": "coupang",
+      "period": "monthly",
+      "scrapedAt": "2026-04-17T02:56:27.011Z",
+      "products": [],
+      "ozKidsEntries": [],
+      "error": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\User\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1217\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+    },
+    {
+      "channelId": "smartstore",
+      "period": "realtime",
+      "scrapedAt": "2026-04-17T02:56:33.024Z",
+      "products": [],
+      "ozKidsEntries": [],
+      "error": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\User\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1217\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+    },
+    {
+      "channelId": "smartstore",
+      "period": "daily",
+      "scrapedAt": "2026-04-17T02:56:33.024Z",
+      "products": [],
+      "ozKidsEntries": [],
+      "error": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\User\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1217\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+    },
+    {
+      "channelId": "smartstore",
+      "period": "weekly",
+      "scrapedAt": "2026-04-17T02:56:33.024Z",
+      "products": [],
+      "ozKidsEntries": [],
+      "error": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\User\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1217\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+    },
+    {
+      "channelId": "smartstore",
+      "period": "monthly",
+      "scrapedAt": "2026-04-17T02:56:33.024Z",
+      "products": [],
+      "ozKidsEntries": [],
+      "error": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\User\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1217\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+    },
+    {
+      "channelId": "boribori",
+      "period": "realtime",
+      "scrapedAt": "2026-04-17T02:56:39.058Z",
+      "products": [],
+      "ozKidsEntries": [],
+      "error": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\User\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1217\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+    },
+    {
+      "channelId": "boribori",
+      "period": "daily",
+      "scrapedAt": "2026-04-17T02:56:39.058Z",
+      "products": [],
+      "ozKidsEntries": [],
+      "error": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\User\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1217\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+    },
+    {
+      "channelId": "boribori",
+      "period": "weekly",
+      "scrapedAt": "2026-04-17T02:56:39.058Z",
+      "products": [],
+      "ozKidsEntries": [],
+      "error": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\User\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1217\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+    },
+    {
+      "channelId": "boribori",
+      "period": "monthly",
+      "scrapedAt": "2026-04-17T02:56:39.058Z",
+      "products": [],
+      "ozKidsEntries": [],
+      "error": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\User\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1217\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+    },
+    {
+      "channelId": "lotteon",
+      "period": "realtime",
+      "scrapedAt": "2026-04-17T02:56:45.084Z",
+      "products": [],
+      "ozKidsEntries": [],
+      "error": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\User\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1217\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+    },
+    {
+      "channelId": "lotteon",
+      "period": "daily",
+      "scrapedAt": "2026-04-17T02:56:45.084Z",
+      "products": [],
+      "ozKidsEntries": [],
+      "error": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\User\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1217\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+    },
+    {
+      "channelId": "lotteon",
+      "period": "weekly",
+      "scrapedAt": "2026-04-17T02:56:45.084Z",
+      "products": [],
+      "ozKidsEntries": [],
+      "error": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\User\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1217\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+    },
+    {
+      "channelId": "lotteon",
+      "period": "monthly",
+      "scrapedAt": "2026-04-17T02:56:45.084Z",
+      "products": [],
+      "ozKidsEntries": [],
+      "error": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\User\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1217\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+    },
+    {
+      "channelId": "kakao",
+      "period": "realtime",
+      "scrapedAt": "2026-04-17T02:56:51.103Z",
+      "products": [],
+      "ozKidsEntries": [],
+      "error": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\User\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1217\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+    },
+    {
+      "channelId": "kakao",
+      "period": "daily",
+      "scrapedAt": "2026-04-17T02:56:51.103Z",
+      "products": [],
+      "ozKidsEntries": [],
+      "error": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\User\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1217\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+    },
+    {
+      "channelId": "kakao",
+      "period": "weekly",
+      "scrapedAt": "2026-04-17T02:56:51.103Z",
+      "products": [],
+      "ozKidsEntries": [],
+      "error": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\User\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1217\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+    },
+    {
+      "channelId": "kakao",
+      "period": "monthly",
+      "scrapedAt": "2026-04-17T02:56:51.103Z",
+      "products": [],
+      "ozKidsEntries": [],
+      "error": "Error: browserType.launch: Executable doesn't exist at C:\\Users\\User\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1217\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝"
+    }
+  ],
+  "scrapedAt": "2026-04-17T02:56:51.104Z",
+  "summary": {
+    "totalOzKidsAppearances": 0,
+    "channelsWithOzKids": 0,
+    "bestRankOverall": null,
+    "bestRankChannel": null,
+    "lastUpdatedAt": "2026-04-17T02:56:51.104Z"
+  }
+}

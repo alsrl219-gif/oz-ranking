@@ -1,0 +1,10 @@
+node_modules
+dist
+server/node_modules
+server/dist
+server/data/errors/*.png
+server/data/latest.json
+server/data/history/
+.env
+.env.local
+*.local
