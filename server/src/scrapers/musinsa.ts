@@ -25,8 +25,8 @@ export async function scrapeMusinsa(periods: PeriodKey[]): Promise<RankingSnapsh
       for (const period of periods) {
         log(CHANNEL, `${period} 랭킹 수집 시작`)
         const url = `${BASE_URL}&rankingType=${PERIOD_PARAM[period]}`
-        await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 })
-        await page.waitForTimeout(2000)
+        await page.goto(url, { waitUntil: 'networkidle', timeout: 20000 })
+        await page.waitForTimeout(1000)
 
         const products = await page.evaluate(() => {
           // 무신사 랭킹 카드 선택자 (실제 DOM 구조에 맞게 조정)
@@ -113,5 +113,5 @@ export async function scrapeMusinsa(periods: PeriodKey[]): Promise<RankingSnapsh
       await context.close()
     }
     return results
-  }, 2, CHANNEL)
+  }, 1, CHANNEL)
 }

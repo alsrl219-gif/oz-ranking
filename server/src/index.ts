@@ -51,7 +51,7 @@ app.get('/api/status', (_req, res) => {
     isRunning: getIsRunning(),
     lastScrapedAt: age?.scrapedAt ?? null,
     ageMinutes: age?.ageMinutes ?? null,
-    nextSchedule: config.cronRealtime,
+    nextSchedule: config.cron4xDaily,
     channelErrors,
   })
 })
@@ -257,29 +257,14 @@ app.get('/api/channels', (_req, res) => {
   ])
 })
 
-// ─── 스케줄러 ─────────────────────────────────────────────────────
-cron.schedule(config.cronRealtime, () => {
-  log('cron', '실시간 스케줄 실행')
-  runAllScrapers(['realtime']).catch((e) => log('cron', `오류: ${e}`))
-}, { timezone: 'Asia/Seoul' })
-
-cron.schedule(config.cronDaily, () => {
-  log('cron', '일별 스케줄 실행')
-  runAllScrapers(['realtime', 'daily']).catch((e) => log('cron', `오류: ${e}`))
-}, { timezone: 'Asia/Seoul' })
-
-cron.schedule(config.cronWeekly, () => {
-  log('cron', '주별 스케줄 실행')
-  runAllScrapers(['realtime', 'daily', 'weekly']).catch((e) => log('cron', `오류: ${e}`))
-}, { timezone: 'Asia/Seoul' })
-
-cron.schedule(config.cronMonthly, () => {
-  log('cron', '월별 스케줄 실행')
+// ─── 스케줄러 — 하루 4회 (08, 12, 16, 20시 KST) ────────────────────
+cron.schedule(config.cron4xDaily, () => {
+  log('cron', '정기 스케줄 실행 (전체 기간)')
   runAllScrapers(['realtime', 'daily', 'weekly', 'monthly']).catch((e) => log('cron', `오류: ${e}`))
 }, { timezone: 'Asia/Seoul' })
 
 // ─── 서버 시작 ────────────────────────────────────────────────────
 app.listen(config.port, () => {
   log('server', `서버 시작: http://localhost:${config.port}`)
-  log('server', `스케줄: 실시간=${config.cronRealtime}, 일별=${config.cronDaily}`)
+  log('server', `스케줄: ${config.cron4xDaily} (08, 12, 16, 20시 KST)`)
 })

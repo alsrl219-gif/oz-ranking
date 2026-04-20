@@ -40,8 +40,8 @@ export async function scrapeBoribori(periods: PeriodKey[]): Promise<RankingSnaps
         for (const cat of CATEGORIES) {
           const url = cat.url(interval)
           try {
-            await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 })
-            await page.waitForTimeout(2000)
+            await page.goto(url, { waitUntil: 'networkidle', timeout: 20000 })
+            await page.waitForTimeout(1000)
 
             const items = await page.evaluate(() => {
               // 보리보리 모바일 상품 목록 셀렉터
@@ -127,5 +127,5 @@ export async function scrapeBoribori(periods: PeriodKey[]): Promise<RankingSnaps
       await context.close()
     }
     return results
-  }, 2, CHANNEL)
+  }, 1, CHANNEL)
 }

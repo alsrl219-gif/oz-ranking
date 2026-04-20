@@ -18,8 +18,8 @@ export async function scrapeCoupang(periods: PeriodKey[]): Promise<RankingSnapsh
 
     try {
       // 쿠팡은 기간별 탭을 클릭하는 방식
-      await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 30000 })
-      await page.waitForTimeout(3000)
+      await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 20000 })
+      await page.waitForTimeout(1000)
 
       for (const period of periods) {
         log(CHANNEL, `${period} 랭킹 수집 시작`)
@@ -36,7 +36,7 @@ export async function scrapeCoupang(periods: PeriodKey[]): Promise<RankingSnapsh
           const tabBtn = page.locator(`button:has-text("${tabText}"), a:has-text("${tabText}")`).first()
           if (await tabBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
             await tabBtn.click()
-            await page.waitForTimeout(2000)
+            await page.waitForTimeout(1000)
           }
         } catch {
           // 탭 없어도 진행
@@ -116,5 +116,5 @@ export async function scrapeCoupang(periods: PeriodKey[]): Promise<RankingSnapsh
       await context.close()
     }
     return results
-  }, 2, CHANNEL)
+  }, 1, CHANNEL)
 }

@@ -18,8 +18,8 @@ export async function scrapeKakao(periods: PeriodKey[]): Promise<RankingSnapshot
     const supportedPeriods = periods.filter((p) => p === 'realtime')
 
     try {
-      await page.goto(BASE_URL, { waitUntil: 'networkidle', timeout: 30000 })
-      await page.waitForTimeout(3000)
+      await page.goto(BASE_URL, { waitUntil: 'networkidle', timeout: 20000 })
+      await page.waitForTimeout(1000)
 
       for (const period of supportedPeriods) {
         log(CHANNEL, `${period} 랭킹 수집 시작`)
@@ -35,7 +35,7 @@ export async function scrapeKakao(periods: PeriodKey[]): Promise<RankingSnapshot
           const tabBtn = page.locator(`button:has-text("${tabMap[period]}"), a:has-text("${tabMap[period]}")`).first()
           if (await tabBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
             await tabBtn.click()
-            await page.waitForTimeout(2000)
+            await page.waitForTimeout(1000)
           }
         } catch {
           // 탭 없어도 진행
@@ -121,5 +121,5 @@ export async function scrapeKakao(periods: PeriodKey[]): Promise<RankingSnapshot
       await context.close()
     }
     return results
-  }, 2, CHANNEL)
+  }, 1, CHANNEL)
 }

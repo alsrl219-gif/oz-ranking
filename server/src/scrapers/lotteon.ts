@@ -19,15 +19,15 @@ export async function scrapeLotteon(periods: PeriodKey[]): Promise<RankingSnapsh
     const supportedPeriods = periods.filter((p) => p === 'realtime' || p === 'weekly' || p === 'monthly')
 
     try {
-      await page.goto(BASE_URL, { waitUntil: 'networkidle', timeout: 30000 })
-      await page.waitForTimeout(3000)
+      await page.goto(BASE_URL, { waitUntil: 'networkidle', timeout: 20000 })
+      await page.waitForTimeout(1000)
 
       // 베스트 탭 클릭 시도
       try {
         const bestTab = page.locator('a:has-text("베스트"), button:has-text("베스트"), [data-tab*="best"]').first()
         if (await bestTab.isVisible({ timeout: 3000 }).catch(() => false)) {
           await bestTab.click()
-          await page.waitForTimeout(2000)
+          await page.waitForTimeout(1000)
         }
       } catch {
         // 탭 없어도 진행
@@ -38,7 +38,7 @@ export async function scrapeLotteon(periods: PeriodKey[]): Promise<RankingSnapsh
         const kidsTab = page.locator('a:has-text("유아동"), button:has-text("유아동")').first()
         if (await kidsTab.isVisible({ timeout: 3000 }).catch(() => false)) {
           await kidsTab.click()
-          await page.waitForTimeout(2000)
+          await page.waitForTimeout(1000)
         }
       } catch {
         // 탭 없어도 진행
@@ -58,7 +58,7 @@ export async function scrapeLotteon(periods: PeriodKey[]): Promise<RankingSnapsh
           const tabBtn = page.locator(`button:has-text("${tabMap[period]}"), a:has-text("${tabMap[period]}")`).first()
           if (await tabBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
             await tabBtn.click()
-            await page.waitForTimeout(2000)
+            await page.waitForTimeout(1000)
           }
         } catch {
           // 탭 없어도 진행
@@ -146,5 +146,5 @@ export async function scrapeLotteon(periods: PeriodKey[]): Promise<RankingSnapsh
       await context.close()
     }
     return results
-  }, 2, CHANNEL)
+  }, 1, CHANNEL)
 }

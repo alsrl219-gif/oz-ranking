@@ -15,8 +15,8 @@ export async function scrapeSmartstore(periods: PeriodKey[]): Promise<RankingSna
     const results: RankingSnapshot[] = []
 
     try {
-      await page.goto(BASE_URL, { waitUntil: 'networkidle', timeout: 30000 })
-      await page.waitForTimeout(2000)
+      await page.goto(BASE_URL, { waitUntil: 'networkidle', timeout: 20000 })
+      await page.waitForTimeout(1000)
 
       for (const period of periods) {
         log(CHANNEL, `${period} 랭킹 수집 시작`)
@@ -32,7 +32,7 @@ export async function scrapeSmartstore(periods: PeriodKey[]): Promise<RankingSna
           const tabBtn = page.locator(`button:has-text("${tabText}"), a:has-text("${tabText}"), li:has-text("${tabText}")`).first()
           if (await tabBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
             await tabBtn.click()
-            await page.waitForTimeout(2000)
+            await page.waitForTimeout(1000)
           }
         } catch {
           // 탭 없어도 진행
@@ -112,5 +112,5 @@ export async function scrapeSmartstore(periods: PeriodKey[]): Promise<RankingSna
       await context.close()
     }
     return results
-  }, 2, CHANNEL)
+  }, 1, CHANNEL)
 }

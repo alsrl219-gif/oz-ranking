@@ -7,11 +7,8 @@ export const config = {
   port: parseInt(process.env.PORT ?? '3002', 10),
   headless: process.env.HEADLESS !== 'false',
 
-  // 스케줄 (Asia/Seoul)
-  cronRealtime: process.env.CRON_REALTIME ?? '0 * * * *',      // 매시 정각
-  cronDaily:    process.env.CRON_DAILY    ?? '5 0 * * *',       // 매일 00:05
-  cronWeekly:   process.env.CRON_WEEKLY   ?? '10 0 * * 1',      // 매주 월요일 00:10
-  cronMonthly:  process.env.CRON_MONTHLY  ?? '15 0 1 * *',      // 매월 1일 00:15
+  // 스케줄 (Asia/Seoul) — 하루 4회: 08시, 12시, 16시, 20시
+  cron4xDaily: process.env.CRON_4X_DAILY ?? '0 8,12,16,20 * * *',
 
   dataDir:    path.resolve(__dirname, '../../data'),
   errorsDir:  path.resolve(__dirname, '../../data/errors'),
