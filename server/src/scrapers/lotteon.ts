@@ -1,12 +1,11 @@
-import { getBrowser, MODERN_UA, log, makeErrorPath, withRetry } from './base'
+import { getBrowser, MODERN_UA, log, withRetry, findProductsInJson, normalizeApiProduct } from './base'
 import { computeDeltas } from '../data-store'
 import type { RankingSnapshot, PeriodKey } from '../types'
 
 const CHANNEL = 'lotteon'
+const BASE_URL = 'https://www.lotteon.com/p/display/shop/seltDpShop/13979?callType=menu'
 
-// 롯데온 유아동 전문관 베스트
-const BASE_URL =
-  'https://www.lotteon.com/p/display/shop/seltDpShop/13979?callType=menu'
+const supportedSet = new Set<PeriodKey>(['realtime', 'weekly', 'monthly'])
 
 export async function scrapeLotteon(periods: PeriodKey[]): Promise<RankingSnapshot[]> {
   return withRetry(async () => {
@@ -15,133 +14,97 @@ export async function scrapeLotteon(periods: PeriodKey[]): Promise<RankingSnapsh
     const page = await context.newPage()
     const results: RankingSnapshot[] = []
 
-    // 롯데온은 realtime, weekly, monthly만 지원 (daily 제외)
-    const supportedPeriods = periods.filter((p) => p === 'realtime' || p === 'weekly' || p === 'monthly')
+    const supported = periods.filter(p => supportedSet.has(p))
+    const unsupported = periods.filter(p => !supportedSet.has(p))
 
     try {
+      const allCaptured: any[][] = []
+      page.on('response', async (res) => {
+        const ct = res.headers()['content-type'] ?? ''
+        if (!ct.includes('json')) return
+        if (/log\.|analytics|gtm|beacon/i.test(res.url())) return
+        try {
+          const json = await res.json()
+          const products = findProductsInJson(json)
+          if (products.length >= 5) {
+            log(CHANNEL, `API 캡처: ${res.url().slice(0, 80)} (${products.length}개)`)
+            allCaptured.push(products)
+          }
+        } catch {}
+      })
+
       await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 20000 })
-      await page.waitForTimeout(1000)
+      await page.waitForTimeout(3000)
 
-      // 베스트 탭 클릭 시도
+      // 베스트 탭 클릭
       try {
-        const bestTab = page.locator('a:has-text("베스트"), button:has-text("베스트"), [data-tab*="best"]').first()
-        if (await bestTab.isVisible({ timeout: 3000 }).catch(() => false)) {
-          await bestTab.click()
-          await page.waitForTimeout(1000)
+        const tab = page.locator('a:has-text("베스트"), button:has-text("베스트")').first()
+        if (await tab.isVisible({ timeout: 2000 }).catch(() => false)) {
+          await tab.click(); await page.waitForTimeout(1500)
         }
-      } catch {
-        // 탭 없어도 진행
-      }
+      } catch {}
 
-      // 유아동 카테고리 탭 클릭 시도
-      try {
-        const kidsTab = page.locator('a:has-text("유아동"), button:has-text("유아동")').first()
-        if (await kidsTab.isVisible({ timeout: 3000 }).catch(() => false)) {
-          await kidsTab.click()
-          await page.waitForTimeout(1000)
-        }
-      } catch {
-        // 탭 없어도 진행
-      }
-
-      for (const period of supportedPeriods) {
-        log(CHANNEL, `${period} 랭킹 수집 시작`)
-
-        // 기간 탭 클릭
+      for (const period of supported) {
         try {
           const tabMap: Record<PeriodKey, string> = {
-            realtime: '실시간',
-            daily: '일간',
-            weekly: '주간',
-            monthly: '월간',
+            realtime: '실시간', daily: '일간', weekly: '주간', monthly: '월간',
           }
           const tabBtn = page.locator(`button:has-text("${tabMap[period]}"), a:has-text("${tabMap[period]}")`).first()
           if (await tabBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-            await tabBtn.click()
-            await page.waitForTimeout(1000)
+            await tabBtn.click(); await page.waitForTimeout(1500)
           }
-        } catch {
-          // 탭 없어도 진행
+        } catch {}
+
+        let items: any[] = allCaptured.flat()
+
+        if (items.length === 0) {
+          items = await page.evaluate(() => {
+            const results: any[] = []
+            const cards = document.querySelectorAll(
+              '.prd_info, [class*="prd_info"], [class*="product-item"], ' +
+              '[class*="ProductItem"], li[class*="product"], [class*="goods-item"]'
+            )
+            cards.forEach((card, idx) => {
+              const nameEl = card.querySelector('.prd_name, [class*="name"], [class*="Name"]')
+              const priceEl = card.querySelector('.price, em[class*="price"], [class*="price"]')
+              const brandEl = card.querySelector('.brand, [class*="brand"]')
+              const imgEl = card.querySelector('img') as HTMLImageElement | null
+              const linkEl = card.querySelector('a') as HTMLAnchorElement | null
+              const name = nameEl?.textContent?.trim() ?? ''
+              if (!name) return
+              results.push({
+                rank: idx + 1, name,
+                brandNm: brandEl?.textContent?.trim() ?? '',
+                price: parseInt((priceEl?.textContent ?? '').replace(/[^0-9]/g, '') || '0', 10),
+                imageUrl: imgEl?.src ?? '', productUrl: linkEl?.href ?? '',
+              })
+            })
+            return results
+          })
         }
 
-        const products = await page.evaluate(() => {
-          const cards = document.querySelectorAll(
-            '.prd_info, [class*="product-item"], [class*="ProductItem"], .item_info, li[class*="product"]'
-          )
-          const items: Array<{
-            rank: number
-            productName: string
-            brandName: string
-            price: number
-            imageUrl: string
-            productUrl: string
-            isOzKids: boolean
-          }> = []
+        const products = items.map((item, i) => normalizeApiProduct(item, i))
+          .filter(p => p.productName.length > 1).slice(0, 100)
 
-          cards.forEach((card, idx) => {
-            const nameEl =
-              card.querySelector('.prd_name, [class*="name"], [class*="Name"]')
-            const brandEl =
-              card.querySelector('.brand, [class*="brand"]')
-            const priceEl =
-              card.querySelector('.price, [class*="price"], em[class*="price"]')
-            const imgEl = card.querySelector('img') as HTMLImageElement | null
-            const linkEl = card.querySelector('a') as HTMLAnchorElement | null
-
-            const name = nameEl?.textContent?.trim() ?? ''
-            const brand = brandEl?.textContent?.trim() ?? ''
-            const priceText = priceEl?.textContent?.trim().replace(/[^0-9]/g, '') ?? '0'
-            if (!name) return
-
-            items.push({
-              rank: idx + 1,
-              productName: name,
-              brandName: brand,
-              price: parseInt(priceText, 10) || 0,
-              imageUrl: imgEl?.src ?? '',
-              productUrl: linkEl?.href ?? '',
-              isOzKids: /오즈키즈|OZKIZ|ozkiz/i.test((brand + ' ' + name).replace(/\s/g, '')),
-            })
-          })
-          return items.slice(0, 100)
-        })
-
-        log(CHANNEL, `${period}: ${products.length}개 상품, 오즈키즈 ${products.filter((p) => p.isOzKids).length}개`)
-
-        const ozRaw = products.filter((p) => p.isOzKids)
-        const ozKidsEntries = computeDeltas(ozRaw, CHANNEL, period)
-
+        log(CHANNEL, `${period}: ${products.length}개, 오즈키즈 ${products.filter(p => p.isOzKids).length}개`)
+        const ozRaw = products.filter(p => p.isOzKids)
         results.push({
-          channelId: CHANNEL,
-          period,
+          channelId: CHANNEL, period,
           scrapedAt: new Date().toISOString(),
-          products,
-          ozKidsEntries,
+          products, ozKidsEntries: computeDeltas(ozRaw, CHANNEL, period),
         })
       }
 
-      // 지원하지 않는 기간은 빈 스냅샷으로
-      for (const period of periods.filter((p) => !(supportedPeriods as PeriodKey[]).includes(p))) {
+      for (const period of unsupported) {
         results.push({
-          channelId: CHANNEL,
-          period,
+          channelId: CHANNEL, period,
           scrapedAt: new Date().toISOString(),
-          products: [],
-          ozKidsEntries: [],
+          products: [], ozKidsEntries: [],
           error: '이 채널은 해당 기간을 지원하지 않습니다',
         })
       }
     } catch (err) {
       log(CHANNEL, `오류: ${err}`)
-      await page.screenshot({ path: makeErrorPath(CHANNEL) }).catch(() => {})
-      results.push({
-        channelId: CHANNEL,
-        period: supportedPeriods[results.length] ?? 'realtime',
-        scrapedAt: new Date().toISOString(),
-        products: [],
-        ozKidsEntries: [],
-        error: String(err),
-      })
     } finally {
       await context.close()
     }

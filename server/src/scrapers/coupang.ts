@@ -1,13 +1,16 @@
-import { getBrowser, MODERN_UA, log, makeErrorPath, withRetry } from './base'
+import { getBrowser, MODERN_UA, log, withRetry, findProductsInJson, normalizeApiProduct } from './base'
 import { computeDeltas } from '../data-store'
 import type { RankingSnapshot, PeriodKey } from '../types'
 
 const CHANNEL = 'coupang'
-
-// 쿠팡 아동의류 카테고리 랭킹 페이지
-// 카테고리: 유아동패션 > 아동의류
 const BASE_URL = 'https://www.coupang.com/np/categories/487148'
 
+const TAB_TEXT: Record<PeriodKey, string> = {
+  realtime: '실시간',
+  daily:    '오늘',
+  weekly:   '이번주',
+  monthly:  '이번달',
+}
 
 export async function scrapeCoupang(periods: PeriodKey[]): Promise<RankingSnapshot[]> {
   return withRetry(async () => {
@@ -17,101 +20,79 @@ export async function scrapeCoupang(periods: PeriodKey[]): Promise<RankingSnapsh
     const results: RankingSnapshot[] = []
 
     try {
-      // 쿠팡은 기간별 탭을 클릭하는 방식
+      const allCaptured: any[][] = []
+      page.on('response', async (res) => {
+        const ct = res.headers()['content-type'] ?? ''
+        if (!ct.includes('json')) return
+        if (/log\.|analytics|gtm|clog/i.test(res.url())) return
+        try {
+          const json = await res.json()
+          const products = findProductsInJson(json)
+          if (products.length >= 5) {
+            log(CHANNEL, `API 캡처: ${res.url().slice(0, 80)} (${products.length}개)`)
+            allCaptured.push(products)
+          }
+        } catch {}
+      })
+
       await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 20000 })
-      await page.waitForTimeout(1000)
+      await page.waitForTimeout(3000)
 
       for (const period of periods) {
-        log(CHANNEL, `${period} 랭킹 수집 시작`)
-
         try {
-          // 기간 탭 클릭 시도
-          const tabMap: Record<PeriodKey, string> = {
-            realtime: '실시간',
-            daily: '일간',
-            weekly: '주간',
-            monthly: '월간',
-          }
-          const tabText = tabMap[period]
-          const tabBtn = page.locator(`button:has-text("${tabText}"), a:has-text("${tabText}")`).first()
+          const tabBtn = page.locator(`button:has-text("${TAB_TEXT[period]}"), a:has-text("${TAB_TEXT[period]}")`).first()
           if (await tabBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
             await tabBtn.click()
-            await page.waitForTimeout(1000)
+            await page.waitForTimeout(2000)
           }
-        } catch {
-          // 탭 없어도 진행
+        } catch {}
+
+        let items: any[] = allCaptured.flat()
+
+        if (items.length === 0) {
+          items = await page.evaluate(() => {
+            const results: any[] = []
+            const cards = document.querySelectorAll(
+              '.baby-product, [class*="baby-product"], ul.baby-product-list > li, ' +
+              '[class*="ProductCard"], [class*="product-item"]'
+            )
+            cards.forEach((card, idx) => {
+              const nameEl = card.querySelector('[class*="name"], [class*="Name"]')
+              const priceEl = card.querySelector('[class*="price"], [class*="Price"]')
+              const imgEl = card.querySelector('img') as HTMLImageElement | null
+              const linkEl = card.querySelector('a') as HTMLAnchorElement | null
+              const name = nameEl?.textContent?.trim() ?? ''
+              if (!name) return
+              results.push({
+                rank: idx + 1, name,
+                price: parseInt((priceEl?.textContent ?? '').replace(/[^0-9]/g, '') || '0', 10),
+                imageUrl: imgEl?.src ?? '', productUrl: linkEl?.href ?? '',
+              })
+            })
+            return results
+          })
         }
 
-        const products = await page.evaluate(() => {
-          const cards = document.querySelectorAll(
-            'li.baby-product, [class*="ProductCard"], [class*="product-list"] li, .search-product'
-          )
-          const items: Array<{
-            rank: number
-            productName: string
-            brandName: string
-            price: number
-            imageUrl: string
-            productUrl: string
-            isOzKids: boolean
-          }> = []
+        const products = items.map((item, i) => normalizeApiProduct(item, i))
+          .filter(p => p.productName.length > 1).slice(0, 100)
 
-          cards.forEach((card, idx) => {
-            const nameEl =
-              card.querySelector('.name') ||
-              card.querySelector('[class*="product-name"]') ||
-              card.querySelector('[class*="ProductName"]') ||
-              card.querySelector('dt.name')
-            const priceEl =
-              card.querySelector('.price-value') ||
-              card.querySelector('[class*="price"]') ||
-              card.querySelector('em.price-value')
-            const imgEl = card.querySelector('img') as HTMLImageElement | null
-            const linkEl = card.querySelector('a') as HTMLAnchorElement | null
-            const brandEl = card.querySelector('[class*="brand"]') || card.querySelector('.brand')
-
-            const name = nameEl?.textContent?.trim() ?? ''
-            const brand = brandEl?.textContent?.trim() ?? ''
-            const priceText = priceEl?.textContent?.trim().replace(/[^0-9]/g, '') ?? '0'
-            if (!name) return
-
-            items.push({
-              rank: idx + 1,
-              productName: name,
-              brandName: brand,
-              price: parseInt(priceText, 10) || 0,
-              imageUrl: imgEl?.src ?? '',
-              productUrl: linkEl?.href ?? '',
-              isOzKids: /오즈키즈|OZKIZ|ozkiz/i.test((brand + ' ' + name).replace(/\s/g, '')),
-            })
-          })
-          return items.slice(0, 100)
-        })
-
-        log(CHANNEL, `${period}: ${products.length}개 상품, 오즈키즈 ${products.filter((p) => p.isOzKids).length}개`)
-
-        const ozRaw = products.filter((p) => p.isOzKids)
-        const ozKidsEntries = computeDeltas(ozRaw, CHANNEL, period)
-
+        log(CHANNEL, `${period}: ${products.length}개, 오즈키즈 ${products.filter(p => p.isOzKids).length}개`)
+        const ozRaw = products.filter(p => p.isOzKids)
         results.push({
-          channelId: CHANNEL,
-          period,
+          channelId: CHANNEL, period,
           scrapedAt: new Date().toISOString(),
-          products,
-          ozKidsEntries,
+          products, ozKidsEntries: computeDeltas(ozRaw, CHANNEL, period),
         })
       }
     } catch (err) {
       log(CHANNEL, `오류: ${err}`)
-      await page.screenshot({ path: makeErrorPath(CHANNEL) }).catch(() => {})
-      results.push({
-        channelId: CHANNEL,
-        period: periods[results.length] ?? 'realtime',
-        scrapedAt: new Date().toISOString(),
-        products: [],
-        ozKidsEntries: [],
-        error: String(err),
-      })
+      for (const period of periods.slice(results.length)) {
+        results.push({
+          channelId: CHANNEL, period,
+          scrapedAt: new Date().toISOString(),
+          products: [], ozKidsEntries: [], error: String(err),
+        })
+      }
     } finally {
       await context.close()
     }
