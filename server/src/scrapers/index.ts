@@ -17,9 +17,7 @@ export async function runAllScrapers(periods: PeriodKey[]): Promise<void> {
     return
   }
   isRunning = true
-  log('orchestrator', `스크래핑 시작 (기간: ${periods.join(', ')})`)
-
-  const allSnapshots: RankingSnapshot[] = []
+  log('orchestrator', `스크래핑 시작 (기간: ${periods.join(', ')}) — 6채널 병렬 실행`)
 
   const scrapers: Array<{ name: ChannelId; fn: () => Promise<RankingSnapshot[]> }> = [
     { name: 'musinsa',    fn: () => scrapeMusinsa(periods)    },
@@ -30,12 +28,26 @@ export async function runAllScrapers(periods: PeriodKey[]): Promise<void> {
     { name: 'kakao',      fn: () => scrapeKakao(periods)      },
   ]
 
-  for (const { name, fn } of scrapers) {
-    try {
-      const snapshots = await fn()
-      allSnapshots.push(...snapshots)
-      // 히스토리 기록
-      for (const snap of snapshots) {
+  // 6개 채널 동시 실행 (병렬)
+  const results = await Promise.allSettled(scrapers.map(({ name, fn }) =>
+    fn().catch((err) => {
+      log(name, `스크래퍼 전체 실패: ${err}`)
+      return periods.map((period): RankingSnapshot => ({
+        channelId: name,
+        period,
+        scrapedAt: new Date().toISOString(),
+        products: [],
+        ozKidsEntries: [],
+        error: String(err),
+      }))
+    })
+  ))
+
+  const allSnapshots: RankingSnapshot[] = []
+  for (const result of results) {
+    if (result.status === 'fulfilled') {
+      allSnapshots.push(...result.value)
+      for (const snap of result.value) {
         if (snap.ozKidsEntries.length > 0) {
           appendHistory({
             scrapedAt: snap.scrapedAt,
@@ -44,19 +56,6 @@ export async function runAllScrapers(periods: PeriodKey[]): Promise<void> {
             ozKidsEntries: snap.ozKidsEntries,
           })
         }
-      }
-    } catch (err) {
-      log(name, `스크래퍼 전체 실패: ${err}`)
-      // 에러가 있어도 빈 스냅샷으로 계속
-      for (const period of periods) {
-        allSnapshots.push({
-          channelId: name,
-          period,
-          scrapedAt: new Date().toISOString(),
-          products: [],
-          ozKidsEntries: [],
-          error: String(err),
-        })
       }
     }
   }
@@ -68,7 +67,7 @@ export async function runAllScrapers(periods: PeriodKey[]): Promise<void> {
     summary,
   })
 
-  log('orchestrator', `스크래핑 완료. 총 스냅샷: ${allSnapshots.length}, 오즈키즈 등장: ${summary.totalOzKidsAppearances}`)
+  log('orchestrator', `완료. 스냅샷: ${allSnapshots.length}개, 오즈키즈: ${summary.totalOzKidsAppearances}회`)
   isRunning = false
 }
 

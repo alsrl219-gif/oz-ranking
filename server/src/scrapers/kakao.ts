@@ -14,8 +14,8 @@ export async function scrapeKakao(periods: PeriodKey[]): Promise<RankingSnapshot
     const page = await context.newPage()
     const results: RankingSnapshot[] = []
 
-    // 카카오는 realtime, weekly만 지원
-    const supportedPeriods = periods.filter((p) => p === 'realtime' || p === 'weekly')
+    // 카카오는 realtime만 지원
+    const supportedPeriods = periods.filter((p) => p === 'realtime')
 
     try {
       await page.goto(BASE_URL, { waitUntil: 'networkidle', timeout: 30000 })

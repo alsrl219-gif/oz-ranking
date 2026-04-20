@@ -124,7 +124,7 @@ export const CHANNEL_META: Record<ChannelId, ChannelMeta> = {
     color: '#FEE500',
     textColor: '#1A1A1A',
     bgLight: '#fffde7',
-    supportedPeriods: ['realtime', 'weekly'],
+    supportedPeriods: ['realtime'],
   },
 }
 
