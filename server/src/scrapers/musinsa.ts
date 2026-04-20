@@ -29,7 +29,8 @@ export async function scrapeMusinsa(periods: PeriodKey[]): Promise<RankingSnapsh
         await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 })
         await page.waitForTimeout(2000)
 
-        const products = await page.evaluate((ozCheck: (t: string) => boolean) => {
+        const products = await page.evaluate(() => {
+          const ozCheck = (t: string) => /오즈키즈|OZKIZ|ozkiz/i.test(t.replace(/\s/g, ''))
           // 무신사 랭킹 카드 선택자 (실제 DOM 구조에 맞게 조정)
           const cards = document.querySelectorAll(
             '[class*="RankingCard"], [class*="ranking-card"], .ranking-product, [data-item-type="ranking"]'
@@ -84,7 +85,7 @@ export async function scrapeMusinsa(periods: PeriodKey[]): Promise<RankingSnapsh
             })
           })
           return items
-        }, isOzKids)
+        })
 
         log(CHANNEL, `${period}: ${products.length}개 상품, 오즈키즈 ${products.filter((p) => p.isOzKids).length}개`)
 

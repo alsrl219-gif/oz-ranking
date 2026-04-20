@@ -46,7 +46,8 @@ export async function scrapeBoribori(periods: PeriodKey[]): Promise<RankingSnaps
           // 탭 없어도 진행
         }
 
-        const products = await page.evaluate((ozCheck: (t: string) => boolean) => {
+        const products = await page.evaluate(() => {
+          const ozCheck = (t: string) => /오즈키즈|OZKIZ|ozkiz/i.test(t.replace(/\s/g, ''))
           const cards = document.querySelectorAll(
             '.prd_list li, .product_list li, [class*="product-item"], [class*="prd-item"], .item_list li'
           )
@@ -84,7 +85,7 @@ export async function scrapeBoribori(periods: PeriodKey[]): Promise<RankingSnaps
             })
           })
           return items.slice(0, 100)
-        }, isOzKids)
+        })
 
         log(CHANNEL, `${period}: ${products.length}개 상품, 오즈키즈 ${products.filter((p) => p.isOzKids).length}개`)
 

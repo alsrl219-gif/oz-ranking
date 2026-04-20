@@ -42,7 +42,8 @@ export async function scrapeKakao(periods: PeriodKey[]): Promise<RankingSnapshot
           // 탭 없어도 진행
         }
 
-        const products = await page.evaluate((ozCheck: (t: string) => boolean) => {
+        const products = await page.evaluate(() => {
+          const ozCheck = (t: string) => /오즈키즈|OZKIZ|ozkiz/i.test(t.replace(/\s/g, ''))
           const cards = document.querySelectorAll(
             '[class*="ProductItem"], [class*="product-item"], [class*="GiftItem"], [class*="gift-item"], ul[class*="list"] li, .ranking_list li, [class*="RankItem"]'
           )
@@ -80,7 +81,7 @@ export async function scrapeKakao(periods: PeriodKey[]): Promise<RankingSnapshot
             })
           })
           return items.slice(0, 100)
-        }, isOzKids)
+        })
 
         log(CHANNEL, `${period}: ${products.length}개 상품, 오즈키즈 ${products.filter((p) => p.isOzKids).length}개`)
 
