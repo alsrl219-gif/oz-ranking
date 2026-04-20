@@ -92,7 +92,7 @@ export const CHANNEL_META: Record<ChannelId, ChannelMeta> = {
     color: '#03C75A',
     textColor: '#ffffff',
     bgLight: '#f0fdf4',
-    supportedPeriods: ['realtime', 'daily', 'weekly', 'monthly'],
+    supportedPeriods: ['daily', 'weekly'],
   },
   musinsa: {
     id: 'musinsa',

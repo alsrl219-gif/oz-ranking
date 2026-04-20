@@ -27,12 +27,12 @@ interface RankingState {
 }
 
 const DEFAULT_PERIODS: Record<ChannelId, PeriodKey> = {
-  coupang: 'realtime',
-  smartstore: 'realtime',
-  musinsa: 'realtime',
-  boribori: 'realtime',
-  lotteon: 'realtime',
-  kakao: 'realtime',
+  coupang:    'realtime',
+  smartstore: 'daily',    // realtime 미지원 → daily 기본
+  musinsa:    'realtime',
+  boribori:   'realtime',
+  lotteon:    'realtime',
+  kakao:      'realtime',
 }
 
 export const useRankingStore = create<RankingState>()(

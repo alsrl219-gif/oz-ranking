@@ -16,7 +16,7 @@ export function Layout({ children }: LayoutProps) {
     : null
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#F7F8FA' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#EEF2F8' }}>
       {/* 헤더 */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-20">
         <div className="max-w-screen-xl mx-auto px-6 h-14 flex items-center gap-6">

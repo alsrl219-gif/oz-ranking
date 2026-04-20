@@ -310,11 +310,11 @@ app.get('/api/debug/:channelId', async (req, res) => {
 app.get('/api/channels', (_req, res) => {
   res.json([
     { id: 'coupang',    label: '쿠팡',         supportedPeriods: ['realtime','daily','weekly','monthly'] },
-    { id: 'smartstore', label: '스마트스토어', supportedPeriods: ['realtime','daily','weekly','monthly'] },
+    { id: 'smartstore', label: '스마트스토어', supportedPeriods: ['daily','weekly'] },
     { id: 'musinsa',    label: '무신사키즈',   supportedPeriods: ['realtime','daily','weekly','monthly'] },
     { id: 'boribori',   label: '보리보리',     supportedPeriods: ['realtime','daily','weekly','monthly'] },
-    { id: 'lotteon',    label: '롯데온',       supportedPeriods: ['realtime','daily'] },
-    { id: 'kakao',      label: '카카오선물하기', supportedPeriods: ['realtime','weekly'] },
+    { id: 'lotteon',    label: '롯데온',       supportedPeriods: ['realtime','weekly','monthly'] },
+    { id: 'kakao',      label: '카카오선물하기', supportedPeriods: ['realtime'] },
   ])
 })
 

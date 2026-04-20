@@ -56,9 +56,14 @@ export function findProductsInJson(obj: any, depth = 0): any[] {
 // ─── 공통: 각 사이트 JSON 필드명 자동 정규화 ────────────────────
 export function normalizeApiProduct(raw: any, idx: number) {
   const rank = raw.rank ?? raw.rankNo ?? raw.ranking ?? raw.rankOrder ?? raw.no ?? idx + 1
-  const brand =
+  const rawBrand =
     raw.brandName ?? raw.brand ?? raw.brandNm ?? raw.makerNm ?? raw.maker ??
     raw.vendorName ?? raw.sellerName ?? ''
+  // 브랜드가 객체로 올 경우 (카카오 등) → .name 필드 추출
+  const brand =
+    rawBrand !== null && typeof rawBrand === 'object'
+      ? (rawBrand.name ?? rawBrand.brandName ?? rawBrand.nm ?? rawBrand.label ?? '')
+      : rawBrand
   const name =
     raw.goodsName ?? raw.productName ?? raw.itemName ?? raw.name ??
     raw.title ?? raw.goodsNm ?? raw.prodNm ?? raw.prdtName ?? raw.dispNm ?? ''

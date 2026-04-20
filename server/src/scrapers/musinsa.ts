@@ -37,31 +37,14 @@ export async function scrapeMusinsa(periods: PeriodKey[]): Promise<RankingSnapsh
 
       const json = await res.json() as any
 
-      // modules 배열에서 MULTICOLUMN 타입 찾기
+      // modules 배열에서 MULTICOLUMN 타입 전부 수집 (각 6개씩 → 전체 100개)
       const modules: any[] = Array.isArray(json?.data?.modules)
         ? json.data.modules
         : Array.isArray(json?.modules) ? json.modules : []
 
-      const multiCol = modules.find((m: any) =>
-        m?.type === 'MULTICOLUMN' || m?.moduleType === 'MULTICOLUMN'
-      )
-      const rawItems: any[] = multiCol?.items ?? multiCol?.data?.items ?? []
-
-      // 전체 modules에서 items 탐색 (구조가 다를 경우 폴백)
-      const allItems: any[] = rawItems.length > 0 ? rawItems : (() => {
-        const found: any[] = []
-        const scan = (obj: any) => {
-          if (Array.isArray(obj) && obj.length > 5 && obj[0]?.info?.productName) {
-            found.push(...obj)
-            return
-          }
-          if (typeof obj === 'object' && obj !== null) {
-            Object.values(obj).forEach(scan)
-          }
-        }
-        scan(json)
-        return found
-      })()
+      const allItems: any[] = modules
+        .filter((m: any) => m?.type === 'MULTICOLUMN' || m?.moduleType === 'MULTICOLUMN')
+        .flatMap((m: any) => m?.items ?? m?.data?.items ?? [])
 
       const products = allItems.map((item: any, idx: number) => {
         const rank  = item?.image?.rank ?? item?.rank ?? idx + 1
