@@ -198,21 +198,11 @@ export function DataManagement() {
         </p>
       </div>
 
-      {/* 3개 섹션 */}
+      {/* 섹션 */}
       <UploadSection
         title="이지어드민 상품마스터"
         description="이지어드민에서 내보낸 상품마스터 xlsx/csv 파일을 업로드하세요."
         fileType="easyAdmin"
-      />
-      <UploadSection
-        title="쿠팡 판매 데이터"
-        description="쿠팡 Wing에서 다운로드한 판매 현황 xlsx/csv 파일을 업로드하세요."
-        fileType="coupangSales"
-      />
-      <UploadSection
-        title="쿠팡 발주서 / 공급 중 수량"
-        description="쿠팡 발주서 또는 공급 중 수량 xlsx/csv 파일을 업로드하세요."
-        fileType="coupangOrder"
       />
     </div>
   )
