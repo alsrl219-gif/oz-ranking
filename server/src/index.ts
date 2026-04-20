@@ -199,6 +199,52 @@ app.delete('/api/upload/files/:id', (req, res) => {
   res.json({ message: '삭제되었습니다.' })
 })
 
+// ─── GET /api/debug/:channelId ─────────────────────────────────────
+// 서버에서 실제로 보이는 페이지 HTML 확인용 (셀렉터 디버깅)
+app.get('/api/debug/:channelId', async (req, res) => {
+  const { getBrowser, MODERN_UA } = await import('./scrapers/base')
+  const urlMap: Record<string, string> = {
+    boribori:   'https://m.boribori.co.kr/home/best/product?interval=24&dealYn=N',
+    musinsa:    'https://www.musinsa.com/main/kids/ranking?gf=A&storeCode=kids&sectionId=234&categoryCode=106000&ageBand=AGE_BAND_ALL&rankingType=REALTIME',
+    kakao:      'https://gift.kakao.com/ranking/category/3',
+    lotteon:    'https://www.lotteon.com/p/display/shop/seltDpShop/13979?callType=menu',
+    coupang:    'https://www.coupang.com/np/categories/487148',
+    smartstore: 'https://shopping.naver.com/best100v2/main.nhn?catId=50000167',
+  }
+  const url = urlMap[req.params.channelId]
+  if (!url) return res.status(400).json({ error: '알 수 없는 채널' })
+
+  try {
+    const browser = await getBrowser()
+    const context = await browser.newContext({ userAgent: MODERN_UA })
+    const page = await context.newPage()
+    await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 })
+    await page.waitForTimeout(2000)
+
+    const info = await page.evaluate(() => ({
+      title: document.title,
+      url: location.href,
+      bodySnippet: document.body.innerHTML.slice(0, 5000),
+      // 잠재적 상품 셀렉터들 hit count
+      selectors: {
+        'li[class]': document.querySelectorAll('li[class]').length,
+        '[class*="product"]': document.querySelectorAll('[class*="product"]').length,
+        '[class*="Product"]': document.querySelectorAll('[class*="Product"]').length,
+        '[class*="item"]': document.querySelectorAll('[class*="item"]').length,
+        '[class*="Item"]': document.querySelectorAll('[class*="Item"]').length,
+        '[class*="goods"]': document.querySelectorAll('[class*="goods"]').length,
+        '[class*="Goods"]': document.querySelectorAll('[class*="Goods"]').length,
+        '[class*="rank"]': document.querySelectorAll('[class*="rank"]').length,
+        'ul > li': document.querySelectorAll('ul > li').length,
+      }
+    }))
+    await context.close()
+    res.json(info)
+  } catch (e) {
+    res.status(500).json({ error: String(e) })
+  }
+})
+
 // ─── GET /api/channels ─────────────────────────────────────────────
 app.get('/api/channels', (_req, res) => {
   res.json([

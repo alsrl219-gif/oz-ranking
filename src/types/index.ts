@@ -116,7 +116,7 @@ export const CHANNEL_META: Record<ChannelId, ChannelMeta> = {
     color: '#E60012',
     textColor: '#ffffff',
     bgLight: '#fff5f5',
-    supportedPeriods: ['realtime', 'daily'],
+    supportedPeriods: ['realtime', 'weekly', 'monthly'],
   },
   kakao: {
     id: 'kakao',

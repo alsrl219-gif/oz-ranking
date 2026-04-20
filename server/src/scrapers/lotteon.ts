@@ -15,8 +15,8 @@ export async function scrapeLotteon(periods: PeriodKey[]): Promise<RankingSnapsh
     const page = await context.newPage()
     const results: RankingSnapshot[] = []
 
-    // 롯데온은 realtime, daily, weekly만 지원 (monthly 제외)
-    const supportedPeriods = periods.filter((p) => p === 'realtime' || p === 'daily' || p === 'weekly')
+    // 롯데온은 realtime, weekly, monthly만 지원 (daily 제외)
+    const supportedPeriods = periods.filter((p) => p === 'realtime' || p === 'weekly' || p === 'monthly')
 
     try {
       await page.goto(BASE_URL, { waitUntil: 'networkidle', timeout: 30000 })
