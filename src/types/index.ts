@@ -134,3 +134,54 @@ export const PERIOD_LABEL: Record<PeriodKey, string> = {
   weekly: '1주',
   monthly: '1개월',
 }
+
+// ─── 키워드 랭킹 ──────────────────────────────────────────────────
+
+export type KeywordCategory =
+  | '아우터'
+  | '원피스'
+  | '세트'
+  | '장화'
+  | '구두'
+  | '실내화'
+  | '기타'
+
+export const KEYWORD_CATEGORIES: KeywordCategory[] = [
+  '아우터', '원피스', '세트', '장화', '구두', '실내화', '기타',
+]
+
+export interface Keyword {
+  id: string
+  keyword: string
+  category: KeywordCategory
+  channels: ChannelId[]
+  createdAt: string
+}
+
+export interface KeywordRankEntry {
+  keywordId: string
+  keyword: string
+  category: string
+  channelId: ChannelId
+  rank: number | null
+  previousRank: number | null
+  rankDelta: number | null
+  productName: string | null
+  productImage: string | null
+  price: number | null
+  date: string
+  scrapedAt: string
+}
+
+// ─── 파일 업로드 ──────────────────────────────────────────────────
+
+export type UploadFileType = 'easyAdmin' | 'coupangSales' | 'coupangOrder'
+
+export interface UploadedFile {
+  id: string
+  originalName: string
+  storedName: string
+  fileType: UploadFileType
+  uploadedAt: string
+  size: number
+}

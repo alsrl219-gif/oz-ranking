@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { BarChart2, LayoutDashboard, RefreshCw, Loader2 } from 'lucide-react'
+import { BarChart2, LayoutDashboard, RefreshCw, Loader2, Search, FolderOpen } from 'lucide-react'
 import { useRankingStore } from '../store/useRankingStore'
 
 interface LayoutProps {
@@ -23,9 +23,10 @@ export function Layout({ children }: LayoutProps) {
           </div>
 
           {/* 네비게이션 */}
-          <nav className="flex items-center gap-1">
+          <nav className="flex items-center gap-0.5">
             <NavLink
               to="/"
+              end
               className={({ isActive }) =>
                 `flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   isActive ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-800'
@@ -34,6 +35,28 @@ export function Layout({ children }: LayoutProps) {
             >
               <LayoutDashboard size={15} />
               대시보드
+            </NavLink>
+            <NavLink
+              to="/keywords"
+              className={({ isActive }) =>
+                `flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  isActive ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-800'
+                }`
+              }
+            >
+              <Search size={15} />
+              키워드 랭킹
+            </NavLink>
+            <NavLink
+              to="/data"
+              className={({ isActive }) =>
+                `flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  isActive ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:text-gray-800'
+                }`
+              }
+            >
+              <FolderOpen size={15} />
+              데이터 관리
             </NavLink>
             <NavLink
               to="/history"

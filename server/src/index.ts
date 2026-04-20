@@ -5,7 +5,18 @@ import { config } from './config'
 import { loadLatest, loadHistory, getDataAge } from './data-store'
 import { runAllScrapers, getIsRunning } from './scrapers/index'
 import { log } from './scrapers/base'
-import type { ChannelId, PeriodKey } from './types'
+import {
+  loadKeywords,
+  addKeyword,
+  updateKeyword,
+  deleteKeyword,
+  appendKeywordRank,
+  loadKeywordHistory,
+  loadLatestKeywordRanks,
+} from './keywords-store'
+import { scrapeAllKeywords } from './scrapers/keyword-search'
+import { upload, loadUploadsMeta, addUploadMeta, deleteUploadMeta } from './upload-handler'
+import type { ChannelId, PeriodKey, KeywordCategory, UploadFileType } from './types'
 
 const app = express()
 app.use(cors())
@@ -83,6 +94,109 @@ app.get('/api/history/:channelId', (req, res) => {
   const limit = parseInt(req.query.limit as string ?? '60', 10)
   const history = loadHistory(channelId, limit, period)
   res.json(history)
+})
+
+// ─── GET  /api/keywords ────────────────────────────────────────────
+app.get('/api/keywords', (_req, res) => {
+  const keywords = loadKeywords()
+  res.json(keywords)
+})
+
+// ─── POST /api/keywords ────────────────────────────────────────────
+app.post('/api/keywords', (req, res) => {
+  const { keyword, category, channels } = req.body as {
+    keyword?: string
+    category?: KeywordCategory
+    channels?: ChannelId[]
+  }
+  if (!keyword?.trim()) return res.status(400).json({ error: '키워드를 입력하세요.' })
+  if (!category) return res.status(400).json({ error: '분류를 선택하세요.' })
+  if (!channels || channels.length === 0)
+    return res.status(400).json({ error: '채널을 하나 이상 선택하세요.' })
+
+  const newKw = addKeyword({ keyword, category, channels })
+  res.status(201).json(newKw)
+})
+
+// ─── PUT  /api/keywords/:id ────────────────────────────────────────
+app.put('/api/keywords/:id', (req, res) => {
+  const { id } = req.params
+  const { keyword, category, channels } = req.body as Partial<{
+    keyword: string
+    category: KeywordCategory
+    channels: ChannelId[]
+  }>
+  const updated = updateKeyword(id, { keyword, category, channels })
+  if (!updated) return res.status(404).json({ error: '키워드를 찾을 수 없습니다.' })
+  res.json(updated)
+})
+
+// ─── DELETE /api/keywords/:id ──────────────────────────────────────
+app.delete('/api/keywords/:id', (req, res) => {
+  const { id } = req.params
+  const ok = deleteKeyword(id)
+  if (!ok) return res.status(404).json({ error: '키워드를 찾을 수 없습니다.' })
+  res.json({ message: '삭제되었습니다.' })
+})
+
+// ─── POST /api/keywords/scrape ─────────────────────────────────────
+app.post('/api/keywords/scrape', (_req, res) => {
+  const keywords = loadKeywords()
+  if (keywords.length === 0) {
+    return res.status(400).json({ error: '등록된 키워드가 없습니다.' })
+  }
+  res.json({ message: `${keywords.length}개 키워드 스크래핑을 시작합니다.` })
+
+  scrapeAllKeywords(keywords)
+    .then((entries) => {
+      for (const entry of entries) {
+        appendKeywordRank(entry)
+      }
+      log('keywords', `키워드 스크래핑 완료: ${entries.length}개 항목`)
+    })
+    .catch((e) => log('keywords', `키워드 스크래핑 오류: ${e}`))
+})
+
+// ─── GET  /api/keywords/ranks ──────────────────────────────────────
+app.get('/api/keywords/ranks', (_req, res) => {
+  const ranks = loadLatestKeywordRanks()
+  res.json(ranks)
+})
+
+// ─── GET  /api/keywords/history/:id ───────────────────────────────
+app.get('/api/keywords/history/:id', (req, res) => {
+  const { id } = req.params
+  const days = parseInt(req.query.days as string ?? '7', 10)
+  const history = loadKeywordHistory(id, days)
+  res.json(history)
+})
+
+// ─── POST /api/upload ──────────────────────────────────────────────
+app.post('/api/upload', upload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: '파일이 없습니다.' })
+  const fileType = (req.body.fileType as UploadFileType) || 'easyAdmin'
+  const meta = addUploadMeta(
+    req.file.originalname,
+    req.file.filename,
+    fileType,
+    req.file.size
+  )
+  res.status(201).json(meta)
+})
+
+// ─── GET  /api/upload/files ────────────────────────────────────────
+app.get('/api/upload/files', (req, res) => {
+  const fileType = req.query.fileType as UploadFileType | undefined
+  let files = loadUploadsMeta()
+  if (fileType) files = files.filter((f) => f.fileType === fileType)
+  res.json(files)
+})
+
+// ─── DELETE /api/upload/files/:id ─────────────────────────────────
+app.delete('/api/upload/files/:id', (req, res) => {
+  const ok = deleteUploadMeta(req.params.id)
+  if (!ok) return res.status(404).json({ error: '파일을 찾을 수 없습니다.' })
+  res.json({ message: '삭제되었습니다.' })
 })
 
 // ─── GET /api/channels ─────────────────────────────────────────────

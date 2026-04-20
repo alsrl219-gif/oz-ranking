@@ -5,9 +5,9 @@ import type { RankingSnapshot, PeriodKey } from '../types'
 
 const CHANNEL = 'lotteon'
 
-// 롯데온 아동/유아 패션 카테고리
+// 롯데온 유아동 전문관 베스트
 const BASE_URL =
-  'https://www.lotteon.com/p/display/shop/seltDpShop/17?mall_id=1&cate_no=LO01000&dpShopTypeNo=1&dpShopNo=17'
+  'https://www.lotteon.com/p/display/shop/seltDpShop/13979?callType=menu'
 
 export async function scrapeLotteon(periods: PeriodKey[]): Promise<RankingSnapshot[]> {
   return withRetry(async () => {
@@ -16,26 +16,54 @@ export async function scrapeLotteon(periods: PeriodKey[]): Promise<RankingSnapsh
     const page = await context.newPage()
     const results: RankingSnapshot[] = []
 
-    // 롯데온은 realtime, daily만 지원
-    const supportedPeriods = periods.filter((p) => p === 'realtime' || p === 'daily')
+    // 롯데온은 realtime, daily, weekly만 지원 (monthly 제외)
+    const supportedPeriods = periods.filter((p) => p === 'realtime' || p === 'daily' || p === 'weekly')
 
     try {
       await page.goto(BASE_URL, { waitUntil: 'networkidle', timeout: 30000 })
       await page.waitForTimeout(3000)
 
-      // 인기순 정렬 클릭
+      // 베스트 탭 클릭 시도
       try {
-        const sortBtn = page.locator('button:has-text("인기순"), a:has-text("인기순"), [data-sort="popular"]').first()
-        if (await sortBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-          await sortBtn.click()
+        const bestTab = page.locator('a:has-text("베스트"), button:has-text("베스트"), [data-tab*="best"]').first()
+        if (await bestTab.isVisible({ timeout: 3000 }).catch(() => false)) {
+          await bestTab.click()
           await page.waitForTimeout(2000)
         }
       } catch {
-        // 정렬 버튼 없어도 진행
+        // 탭 없어도 진행
+      }
+
+      // 유아동 카테고리 탭 클릭 시도
+      try {
+        const kidsTab = page.locator('a:has-text("유아동"), button:has-text("유아동")').first()
+        if (await kidsTab.isVisible({ timeout: 3000 }).catch(() => false)) {
+          await kidsTab.click()
+          await page.waitForTimeout(2000)
+        }
+      } catch {
+        // 탭 없어도 진행
       }
 
       for (const period of supportedPeriods) {
         log(CHANNEL, `${period} 랭킹 수집 시작`)
+
+        // 기간 탭 클릭
+        try {
+          const tabMap: Record<PeriodKey, string> = {
+            realtime: '실시간',
+            daily: '일간',
+            weekly: '주간',
+            monthly: '월간',
+          }
+          const tabBtn = page.locator(`button:has-text("${tabMap[period]}"), a:has-text("${tabMap[period]}")`).first()
+          if (await tabBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+            await tabBtn.click()
+            await page.waitForTimeout(2000)
+          }
+        } catch {
+          // 탭 없어도 진행
+        }
 
         const products = await page.evaluate((ozCheck: (t: string) => boolean) => {
           const cards = document.querySelectorAll(
