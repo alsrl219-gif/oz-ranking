@@ -11,7 +11,7 @@ export async function scrapeKakao(periods: PeriodKey[]): Promise<RankingSnapshot
     const context = await browser.newContext({ userAgent: MODERN_UA })
     const page = await context.newPage()
     const results: RankingSnapshot[] = []
-    const supportedPeriods = periods.filter(p => p === 'realtime')
+    const supportedPeriods: PeriodKey[] = periods.filter(p => p === 'realtime')
 
     try {
       // ── API 인터셉션 시도 ─────────────────────────────────────

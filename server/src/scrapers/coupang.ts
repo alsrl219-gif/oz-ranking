@@ -73,7 +73,7 @@ export async function scrapeCoupang(periods: PeriodKey[]): Promise<RankingSnapsh
 
       if (!loaded) {
         return periods.map(period => ({
-          channelId: CHANNEL as const, period,
+          channelId: CHANNEL, period,
           scrapedAt: new Date().toISOString(),
           products: [], ozKidsEntries: [],
           error: '쿠팡 봇 차단 (Access Denied)',

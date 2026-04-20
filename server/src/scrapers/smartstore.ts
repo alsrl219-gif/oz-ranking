@@ -1,108 +1,99 @@
-import { getBrowser, MODERN_UA, log, withRetry, findProductsInJson, normalizeApiProduct } from './base'
+import { log } from './base'
 import { computeDeltas } from '../data-store'
 import type { RankingSnapshot, PeriodKey } from '../types'
 
 const CHANNEL = 'smartstore'
-const BASE_URL = 'https://shopping.naver.com/best100v2/main.nhn?catId=50000167'
 
-const TAB_TEXT: Record<PeriodKey, string> = {
-  realtime: '실시간',
-  daily:    '일별',
-  weekly:   '주간',
-  monthly:  '월간',
+// 스마트스토어 Best 100: 아동/유아의류 카테고리 (catId=50000167)
+// periodType 파라미터 매핑
+const PERIOD_MAP: Partial<Record<PeriodKey, string>> = {
+  daily:  'DAILY',
+  weekly: 'WEEKLY',
+}
+
+const BASE_API =
+  'https://snxbest.naver.com/api/v1/snxbest/product/rank' +
+  '?ageType=ALL&categoryId=50000167&sortType=PRODUCT_BUY&showAd=false'
+
+const HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  'Accept': 'application/json, text/plain, */*',
+  'Referer': 'https://snxbest.naver.com/',
+  'Origin': 'https://snxbest.naver.com',
 }
 
 export async function scrapeSmartstore(periods: PeriodKey[]): Promise<RankingSnapshot[]> {
-  return withRetry(async () => {
-    const browser = await getBrowser()
-    const context = await browser.newContext({ userAgent: MODERN_UA })
-    const page = await context.newPage()
-    const results: RankingSnapshot[] = []
+  const results: RankingSnapshot[] = []
+
+  for (const period of periods) {
+    const periodType = PERIOD_MAP[period]
+    if (!periodType) {
+      results.push({
+        channelId: CHANNEL, period,
+        scrapedAt: new Date().toISOString(),
+        products: [], ozKidsEntries: [],
+        error: '이 채널은 해당 기간을 지원하지 않습니다',
+      })
+      continue
+    }
+
+    log(CHANNEL, `${period} (periodType=${periodType}) 수집 시작`)
 
     try {
-      const allCaptured: Map<string, any[]> = new Map()
-      page.on('response', async (res) => {
-        const url = res.url()
-        const ct = res.headers()['content-type'] ?? ''
-        if (!ct.includes('json')) return
-        if (/log\.|analytics|gtm|wcs|naver\.com\/v1\/nlog/i.test(url)) return
-        try {
-          const json = await res.json()
-          const products = findProductsInJson(json)
-          if (products.length >= 5) {
-            log(CHANNEL, `API 캡처: ${url.slice(0, 80)} (${products.length}개)`)
-            allCaptured.set(url, products)
-          }
-        } catch {}
+      const url = `${BASE_API}&periodType=${periodType}`
+      const res = await fetch(url, { headers: HEADERS })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+
+      const json = await res.json() as any
+      const items: any[] = json?.products ?? []
+
+      log(CHANNEL, `${period}: 원시 ${items.length}개`)
+
+      const products = items
+        .filter(item => !item.isAd)          // 광고 제외
+        .map((item, idx) => mapProduct(item, idx))
+        .filter(p => p.productName.length > 1)
+        .slice(0, 100)
+
+      const ozRaw = products.filter(p => p.isOzKids)
+      log(CHANNEL, `${period}: ${products.length}개, 오즈키즈 ${ozRaw.length}개`)
+
+      results.push({
+        channelId: CHANNEL, period,
+        scrapedAt: new Date().toISOString(),
+        products,
+        ozKidsEntries: computeDeltas(ozRaw, CHANNEL, period),
       })
-
-      await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 20000 })
-      await page.waitForTimeout(3000)
-
-      for (const period of periods) {
-        try {
-          const tabText = TAB_TEXT[period]
-          const tabBtn = page.locator(`button:has-text("${tabText}"), a:has-text("${tabText}"), li:has-text("${tabText}")`).first()
-          if (await tabBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-            await tabBtn.click()
-            await page.waitForTimeout(2000)
-          }
-        } catch {}
-
-        let items: any[] = [...allCaptured.values()].flat()
-
-        if (items.length === 0) {
-          items = await page.evaluate(() => {
-            const results: any[] = []
-            const cards = document.querySelectorAll(
-              '.best_list li, [class*="BestItem"], [class*="best-item"], ' +
-              '[class*="ProductCard"], .product_list li'
-            )
-            cards.forEach((card, idx) => {
-              const nameEl = card.querySelector('a.tit, .tit, [class*="name"], [class*="Name"]')
-              const priceEl = card.querySelector('.price strong, [class*="price"]')
-              const brandEl = card.querySelector('.brand, [class*="brand"], .maker')
-              const rankEl = card.querySelector('em.num, .num, [class*="rank"]')
-              const imgEl = card.querySelector('img') as HTMLImageElement | null
-              const linkEl = card.querySelector('a') as HTMLAnchorElement | null
-              const name = nameEl?.textContent?.trim() ?? ''
-              if (!name) return
-              results.push({
-                rank: rankEl ? parseInt(rankEl.textContent?.trim() ?? '', 10) || idx + 1 : idx + 1,
-                name,
-                brandNm: brandEl?.textContent?.trim() ?? '',
-                price: parseInt((priceEl?.textContent ?? '').replace(/[^0-9]/g, '') || '0', 10),
-                imageUrl: imgEl?.src ?? '',
-                productUrl: linkEl?.href ?? '',
-              })
-            })
-            return results
-          })
-        }
-
-        const products = items.map((item, i) => normalizeApiProduct(item, i))
-          .filter(p => p.productName.length > 1).slice(0, 100)
-
-        log(CHANNEL, `${period}: ${products.length}개, 오즈키즈 ${products.filter(p => p.isOzKids).length}개`)
-        const ozRaw = products.filter(p => p.isOzKids)
-        results.push({
-          channelId: CHANNEL, period,
-          scrapedAt: new Date().toISOString(),
-          products, ozKidsEntries: computeDeltas(ozRaw, CHANNEL, period),
-        })
-      }
-    } catch (err) {
-      log(CHANNEL, `오류: ${err}`)
-      for (const period of periods.slice(results.length)) {
-        results.push({
-          channelId: CHANNEL, period,
-          scrapedAt: new Date().toISOString(),
-          products: [], ozKidsEntries: [], error: String(err),
-        })
-      }
-    } finally {
-      await context.close()
+    } catch (e) {
+      log(CHANNEL, `${period} 오류: ${e}`)
+      results.push({
+        channelId: CHANNEL, period,
+        scrapedAt: new Date().toISOString(),
+        products: [], ozKidsEntries: [],
+        error: String(e),
+      })
     }
-    return results
-  }, 1, CHANNEL)
+  }
+
+  return results
+}
+
+function mapProduct(item: any, idx: number) {
+  const name  = String(item.title ?? item.productName ?? item.name ?? '')
+  // mallNm = 스토어명 (브랜드명과 다를 수 있으나 최선의 근사값)
+  const brand = String(item.mallNm ?? item.brandNm ?? item.brand ?? '')
+  const price = Number(item.priceValue ?? item.discountPriceValue ?? item.price ?? 0)
+  const imageUrl  = String(item.imageUrl ?? item.imgUrl ?? '')
+  const productUrl = String(item.linkUrl ?? item.productUrl ?? item.url ?? '')
+  const rank = Number(item.rank ?? idx + 1)
+
+  return {
+    rank,
+    productName: name.trim(),
+    brandName:   brand.trim(),
+    price,
+    imageUrl,
+    productUrl,
+    isOzKids: /오즈키즈|OZKIZ|ozkiz/i.test((brand + ' ' + name).replace(/\s/g, '')),
+  }
 }
