@@ -206,7 +206,7 @@ app.delete('/api/upload/files/:id', (req, res) => {
 })
 
 // ─── GET /api/debug/:channelId ─────────────────────────────────────
-// 서버에서 실제로 보이는 페이지 HTML 확인용 (셀렉터 디버깅)
+// 네트워크 응답 + __NEXT_DATA__ + DOM 셀렉터 종합 분석
 app.get('/api/debug/:channelId', async (req, res) => {
   const { getBrowser, MODERN_UA } = await import('./scrapers/base')
   const urlMap: Record<string, string> = {
@@ -220,34 +220,69 @@ app.get('/api/debug/:channelId', async (req, res) => {
   const url = urlMap[req.params.channelId]
   if (!url) return res.status(400).json({ error: '알 수 없는 채널' })
 
+  const capturedApis: Array<{ url: string; snippet: string }> = []
+
   try {
     const browser = await getBrowser()
     const context = await browser.newContext({ userAgent: MODERN_UA })
     const page = await context.newPage()
-    await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 })
-    await page.waitForTimeout(2000)
 
-    const info = await page.evaluate(() => ({
-      title: document.title,
-      url: location.href,
-      bodySnippet: document.body.innerHTML.slice(0, 5000),
-      // 잠재적 상품 셀렉터들 hit count
-      selectors: {
-        'li[class]': document.querySelectorAll('li[class]').length,
-        '[class*="product"]': document.querySelectorAll('[class*="product"]').length,
-        '[class*="Product"]': document.querySelectorAll('[class*="Product"]').length,
-        '[class*="item"]': document.querySelectorAll('[class*="item"]').length,
-        '[class*="Item"]': document.querySelectorAll('[class*="Item"]').length,
-        '[class*="goods"]': document.querySelectorAll('[class*="goods"]').length,
-        '[class*="Goods"]': document.querySelectorAll('[class*="Goods"]').length,
-        '[class*="rank"]': document.querySelectorAll('[class*="rank"]').length,
-        'ul > li': document.querySelectorAll('ul > li').length,
+    // 모든 JSON API 응답 캡처
+    page.on('response', async (response) => {
+      const resUrl = response.url()
+      const ct = response.headers()['content-type'] ?? ''
+      if (!ct.includes('json')) return
+      // 광고/분석 제외
+      if (/google|facebook|amplitude|segment|mixpanel|gtm|analytics/i.test(resUrl)) return
+      try {
+        const text = await response.text()
+        if (text.length > 50) {
+          capturedApis.push({ url: resUrl, snippet: text.slice(0, 1000) })
+        }
+      } catch {}
+    })
+
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 25000 })
+    await page.waitForTimeout(3000)
+
+    const info = await page.evaluate(() => {
+      // __NEXT_DATA__ 추출
+      const nextDataEl = document.getElementById('__NEXT_DATA__')
+      let nextDataSnippet: string | null = null
+      if (nextDataEl?.textContent) {
+        nextDataSnippet = nextDataEl.textContent.slice(0, 3000)
       }
-    }))
+
+      // 페이지 상태 객체 (window.__INITIAL_STATE__ 등)
+      const w = window as any
+      const stateKeys = Object.keys(w).filter(k =>
+        /state|store|data|redux|vuex|props|ranking|product/i.test(k)
+      ).slice(0, 10)
+
+      return {
+        title: document.title,
+        url: location.href,
+        nextDataSnippet,
+        stateKeys,
+        bodySnippet: document.body.innerHTML.slice(0, 3000),
+        selectors: {
+          'li[class]': document.querySelectorAll('li[class]').length,
+          '[class*="product" i]': document.querySelectorAll('[class*="product"]').length,
+          '[class*="item" i]': document.querySelectorAll('[class*="item"]').length,
+          '[class*="goods" i]': document.querySelectorAll('[class*="goods"]').length,
+          '[class*="rank" i]': document.querySelectorAll('[class*="rank"]').length,
+          'ul > li': document.querySelectorAll('ul > li').length,
+          'a[href]': document.querySelectorAll('a[href]').length,
+        },
+        // 첫 번째 <ul><li> 구조 샘플
+        firstListHtml: document.querySelector('ul')?.innerHTML.slice(0, 500) ?? null,
+      }
+    })
+
     await context.close()
-    res.json(info)
+    res.json({ ...info, capturedApis: capturedApis.slice(0, 20) })
   } catch (e) {
-    res.status(500).json({ error: String(e) })
+    res.status(500).json({ error: String(e), capturedApis })
   }
 })
 
