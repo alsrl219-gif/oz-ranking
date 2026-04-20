@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, Loader2 } from 'lucide-react'
 import { PeriodTabs } from './PeriodTabs'
 import { RankingTable } from './RankingTable'
 import { StatusIndicator } from './StatusIndicator'
@@ -12,13 +12,14 @@ interface ChannelCardProps {
 
 export function ChannelCard({ channelId }: ChannelCardProps) {
   const meta = CHANNEL_META[channelId]
-  const { selectedPeriods, setChannelPeriod, getSnapshot, status, isScraping } = useRankingStore()
+  const { selectedPeriods, setChannelPeriod, getSnapshot, status, isScraping, scrapingChannels, triggerChannelScrape } = useRankingStore()
   const [showAll, setShowAll] = useState(false)
 
   const selectedPeriod: PeriodKey = selectedPeriods[channelId] ?? 'realtime'
   const snapshot = getSnapshot(channelId, selectedPeriod)
   const hasError = !!status?.channelErrors[channelId]
   const ozCount = snapshot?.ozKidsEntries.length ?? 0
+  const isThisChannelScraping = !!(isScraping || scrapingChannels[channelId])
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-card hover:shadow-card-hover transition-shadow overflow-hidden flex flex-col">
@@ -42,15 +43,31 @@ export function ChannelCard({ channelId }: ChannelCardProps) {
             )}
           </div>
           <div className="mt-0.5">
-            <StatusIndicator isRunning={isScraping} hasError={hasError} />
+            <StatusIndicator isRunning={isThisChannelScraping} hasError={hasError} />
           </div>
         </div>
-        <button
-          onClick={() => setShowAll((v) => !v)}
-          className="text-xs text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
-        >
-          {showAll ? '요약' : '전체'}
-        </button>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* 채널별 수집 버튼 */}
+          <button
+            onClick={() => triggerChannelScrape(channelId)}
+            disabled={isThisChannelScraping}
+            title="이 채널만 수집"
+            className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium border border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700 disabled:opacity-40 transition-colors"
+          >
+            {isThisChannelScraping ? (
+              <Loader2 size={11} className="animate-spin" />
+            ) : (
+              <RefreshCw size={11} />
+            )}
+            수집
+          </button>
+          <button
+            onClick={() => setShowAll((v) => !v)}
+            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            {showAll ? '요약' : '전체'}
+          </button>
+        </div>
       </div>
 
       {/* 기간 탭 */}

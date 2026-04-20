@@ -90,7 +90,7 @@ export function Layout({ children }: LayoutProps) {
               ) : (
                 <RefreshCw size={14} />
               )}
-              {isScraping ? '수집 중' : '수동 수집'}
+              {isScraping ? '수집 중' : '전체 수집'}
             </button>
           </div>
         </div>
