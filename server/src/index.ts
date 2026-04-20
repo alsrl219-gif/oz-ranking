@@ -2,7 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import cron from 'node-cron'
 import { config } from './config'
-import { loadLatest, loadHistory, getDataAge } from './data-store'
+import { loadLatest, loadHistory, getDataAge, mergeChannelSnapshots, appendHistory } from './data-store'
 import { runAllScrapers, getIsRunning, resetIsRunning } from './scrapers/index'
 import { log } from './scrapers/base'
 import {
@@ -84,13 +84,33 @@ app.post('/api/scrape/:channelId', (req, res) => {
     return res.status(409).json({ error: '이미 스크래핑이 진행 중입니다.' })
   }
   res.json({ message: `${channelId} 스크래핑을 시작합니다.` })
-  // 단일 채널 스크래핑
-  import(`./scrapers/${channelId}`)
-    .then((mod) => {
+
+  // 단일 채널 스크래핑 → 결과를 기존 데이터에 병합 저장
+  ;(async () => {
+    try {
+      const mod = await import(`./scrapers/${channelId}`)
       const fnName = `scrape${channelId.charAt(0).toUpperCase() + channelId.slice(1)}`
-      return mod[fnName](['realtime', 'daily', 'weekly', 'monthly'])
-    })
-    .catch((e) => log('api', `단일 채널 스크래핑 오류: ${e}`))
+      const snaps = await mod[fnName](['realtime', 'daily', 'weekly', 'monthly'])
+
+      // 히스토리 저장
+      for (const snap of snaps) {
+        if (snap.ozKidsEntries.length > 0) {
+          appendHistory({
+            scrapedAt: snap.scrapedAt,
+            channelId: snap.channelId,
+            period: snap.period,
+            ozKidsEntries: snap.ozKidsEntries,
+          })
+        }
+      }
+
+      // latest.json에 해당 채널 스냅샷 병합
+      mergeChannelSnapshots(channelId, snaps)
+      log('api', `${channelId} 단일 수집 완료, ${snaps.length}개 스냅샷 저장`)
+    } catch (e) {
+      log('api', `단일 채널 스크래핑 오류: ${e}`)
+    }
+  })()
 })
 
 // ─── GET /api/history/:channelId ───────────────────────────────────

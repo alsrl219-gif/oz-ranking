@@ -93,6 +93,16 @@ export function computeDeltas(
   })
 }
 
+// ─── 단일 채널 스냅샷 병합 저장 ───────────────────────────────────────
+// 기존 latest.json에서 해당 채널 스냅샷만 교체하고 나머지 채널은 유지
+export function mergeChannelSnapshots(channelId: ChannelId, newSnaps: RankingSnapshot[]): void {
+  const existing = loadLatest()
+  const otherSnaps = existing?.snapshots.filter((s) => s.channelId !== channelId) ?? []
+  const merged = [...otherSnaps, ...newSnaps]
+  const summary = computeSummary(merged)
+  saveLatest({ snapshots: merged, scrapedAt: new Date().toISOString(), summary })
+}
+
 // ─── 요약 계산 ─────────────────────────────────────────────────────
 export function computeSummary(snapshots: RankingSnapshot[]): RankingSummary {
   const ozSnapshots = snapshots.filter((s) => s.ozKidsEntries.length > 0)
