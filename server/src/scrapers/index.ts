@@ -10,6 +10,7 @@ import type { PeriodKey, RankingSnapshot, ChannelId } from '../types'
 
 let isRunning = false
 export function getIsRunning() { return isRunning }
+export function resetIsRunning() { isRunning = false; log('orchestrator', 'isRunning 강제 초기화') }
 
 // 동시 실행 수 제한 (메모리 초과 방지)
 async function runWithConcurrency<T>(
@@ -60,31 +61,45 @@ export async function runAllScrapers(periods: PeriodKey[]): Promise<void> {
     }
   })
 
-  // 최대 2개 채널 동시 실행 (512MB 메모리 제한 대응)
-  const resultGroups = await runWithConcurrency(tasks, 2)
-  const allSnapshots = resultGroups.flat()
+  try {
+    // 최대 2개 채널 동시 실행, 전체 4분 타임아웃
+    const TOTAL_TIMEOUT_MS = 4 * 60 * 1000
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('전체 수집 4분 타임아웃')), TOTAL_TIMEOUT_MS)
+    )
+    const resultGroups = await Promise.race([
+      runWithConcurrency(tasks, 2),
+      timeoutPromise,
+    ]) as Awaited<ReturnType<typeof runWithConcurrency<RankingSnapshot[]>>>
+    const allSnapshots = resultGroups.flat()
 
-  // 히스토리 저장
-  for (const snap of allSnapshots) {
-    if (snap.ozKidsEntries.length > 0) {
-      appendHistory({
-        scrapedAt: snap.scrapedAt,
-        channelId: snap.channelId,
-        period: snap.period,
-        ozKidsEntries: snap.ozKidsEntries,
-      })
+    // 히스토리 저장
+    for (const snap of allSnapshots) {
+      if (snap.ozKidsEntries.length > 0) {
+        appendHistory({
+          scrapedAt: snap.scrapedAt,
+          channelId: snap.channelId,
+          period: snap.period,
+          ozKidsEntries: snap.ozKidsEntries,
+        })
+      }
     }
+
+    const summary = computeSummary(allSnapshots)
+    saveLatest({ snapshots: allSnapshots, scrapedAt: new Date().toISOString(), summary })
+
+    log('orchestrator', `완료. 스냅샷: ${allSnapshots.length}개, 오즈키즈: ${summary.totalOzKidsAppearances}회`)
+  } catch (err) {
+    log('orchestrator', `수집 실패: ${err}`)
+  } finally {
+    // 어떤 상황에서도 브라우저 정리 + isRunning 해제
+    await closeBrowser().catch(() => {})
+    isRunning = false
+    log('orchestrator', 'isRunning 해제, 브라우저 종료')
   }
-
-  const summary = computeSummary(allSnapshots)
-  saveLatest({ snapshots: allSnapshots, scrapedAt: new Date().toISOString(), summary })
-
-  log('orchestrator', `완료. 스냅샷: ${allSnapshots.length}개, 오즈키즈: ${summary.totalOzKidsAppearances}회`)
-
-  // 브라우저 완전 종료 → 메모리 해제
-  await closeBrowser()
-  isRunning = false
 }
+
+export { closeBrowser }
 
 if (require.main === module) {
   runAllScrapers(['realtime', 'daily', 'weekly', 'monthly'])

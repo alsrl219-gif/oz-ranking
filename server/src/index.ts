@@ -3,7 +3,7 @@ import cors from 'cors'
 import cron from 'node-cron'
 import { config } from './config'
 import { loadLatest, loadHistory, getDataAge } from './data-store'
-import { runAllScrapers, getIsRunning } from './scrapers/index'
+import { runAllScrapers, getIsRunning, resetIsRunning } from './scrapers/index'
 import { log } from './scrapers/base'
 import {
   loadKeywords,
@@ -54,6 +54,12 @@ app.get('/api/status', (_req, res) => {
     nextSchedule: config.cron4xDaily,
     channelErrors,
   })
+})
+
+// ─── POST /api/reset ───────────────────────────────────────────────
+app.post('/api/reset', (_req, res) => {
+  resetIsRunning()
+  res.json({ message: 'isRunning 초기화 완료' })
 })
 
 // ─── POST /api/scrape ──────────────────────────────────────────────

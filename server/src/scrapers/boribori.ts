@@ -40,7 +40,7 @@ export async function scrapeBoribori(periods: PeriodKey[]): Promise<RankingSnaps
         for (const cat of CATEGORIES) {
           const url = cat.url(interval)
           try {
-            await page.goto(url, { waitUntil: 'networkidle', timeout: 20000 })
+            await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 })
             await page.waitForTimeout(1000)
 
             const items = await page.evaluate(() => {

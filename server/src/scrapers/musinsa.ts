@@ -25,7 +25,7 @@ export async function scrapeMusinsa(periods: PeriodKey[]): Promise<RankingSnapsh
       for (const period of periods) {
         log(CHANNEL, `${period} 랭킹 수집 시작`)
         const url = `${BASE_URL}&rankingType=${PERIOD_PARAM[period]}`
-        await page.goto(url, { waitUntil: 'networkidle', timeout: 20000 })
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 })
         await page.waitForTimeout(1000)
 
         const products = await page.evaluate(() => {

@@ -18,7 +18,7 @@ export async function scrapeKakao(periods: PeriodKey[]): Promise<RankingSnapshot
     const supportedPeriods = periods.filter((p) => p === 'realtime')
 
     try {
-      await page.goto(BASE_URL, { waitUntil: 'networkidle', timeout: 20000 })
+      await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 20000 })
       await page.waitForTimeout(1000)
 
       for (const period of supportedPeriods) {

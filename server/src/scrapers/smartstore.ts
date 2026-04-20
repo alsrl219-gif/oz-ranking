@@ -15,7 +15,7 @@ export async function scrapeSmartstore(periods: PeriodKey[]): Promise<RankingSna
     const results: RankingSnapshot[] = []
 
     try {
-      await page.goto(BASE_URL, { waitUntil: 'networkidle', timeout: 20000 })
+      await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 20000 })
       await page.waitForTimeout(1000)
 
       for (const period of periods) {

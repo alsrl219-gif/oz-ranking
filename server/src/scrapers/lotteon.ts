@@ -19,7 +19,7 @@ export async function scrapeLotteon(periods: PeriodKey[]): Promise<RankingSnapsh
     const supportedPeriods = periods.filter((p) => p === 'realtime' || p === 'weekly' || p === 'monthly')
 
     try {
-      await page.goto(BASE_URL, { waitUntil: 'networkidle', timeout: 20000 })
+      await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 20000 })
       await page.waitForTimeout(1000)
 
       // 베스트 탭 클릭 시도
