@@ -1,5 +1,4 @@
 import { getBrowser, MODERN_UA, log, makeErrorPath, withRetry } from './base'
-import { isOzKids } from '../types'
 import { computeDeltas } from '../data-store'
 import type { RankingSnapshot, PeriodKey } from '../types'
 
@@ -47,7 +46,6 @@ export async function scrapeBoribori(periods: PeriodKey[]): Promise<RankingSnaps
         }
 
         const products = await page.evaluate(() => {
-          const ozCheck = (t: string) => /오즈키즈|OZKIZ|ozkiz/i.test(t.replace(/\s/g, ''))
           const cards = document.querySelectorAll(
             '.prd_list li, .product_list li, [class*="product-item"], [class*="prd-item"], .item_list li'
           )
@@ -81,7 +79,7 @@ export async function scrapeBoribori(periods: PeriodKey[]): Promise<RankingSnaps
               price: parseInt(priceText, 10) || 0,
               imageUrl: imgEl?.src ?? '',
               productUrl: linkEl?.href ?? '',
-              isOzKids: ozCheck(brand) || ozCheck(name),
+              isOzKids: /오즈키즈|OZKIZ|ozkiz/i.test((brand + ' ' + name).replace(/\s/g, '')),
             })
           })
           return items.slice(0, 100)

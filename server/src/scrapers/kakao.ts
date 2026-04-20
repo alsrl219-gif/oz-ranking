@@ -1,5 +1,4 @@
 import { getBrowser, MODERN_UA, log, makeErrorPath, withRetry } from './base'
-import { isOzKids } from '../types'
 import { computeDeltas } from '../data-store'
 import type { RankingSnapshot, PeriodKey } from '../types'
 
@@ -43,7 +42,6 @@ export async function scrapeKakao(periods: PeriodKey[]): Promise<RankingSnapshot
         }
 
         const products = await page.evaluate(() => {
-          const ozCheck = (t: string) => /오즈키즈|OZKIZ|ozkiz/i.test(t.replace(/\s/g, ''))
           const cards = document.querySelectorAll(
             '[class*="ProductItem"], [class*="product-item"], [class*="GiftItem"], [class*="gift-item"], ul[class*="list"] li, .ranking_list li, [class*="RankItem"]'
           )
@@ -77,7 +75,7 @@ export async function scrapeKakao(periods: PeriodKey[]): Promise<RankingSnapshot
               price: parseInt(priceText, 10) || 0,
               imageUrl: imgEl?.src ?? '',
               productUrl: linkEl?.href ?? '',
-              isOzKids: ozCheck(brand) || ozCheck(name),
+              isOzKids: /오즈키즈|OZKIZ|ozkiz/i.test((brand + ' ' + name).replace(/\s/g, '')),
             })
           })
           return items.slice(0, 100)

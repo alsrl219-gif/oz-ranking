@@ -1,5 +1,4 @@
 import { getBrowser, MODERN_UA, log, makeErrorPath, withRetry } from './base'
-import { isOzKids } from '../types'
 import { computeDeltas } from '../data-store'
 import type { RankingSnapshot, PeriodKey } from '../types'
 
@@ -30,7 +29,6 @@ export async function scrapeMusinsa(periods: PeriodKey[]): Promise<RankingSnapsh
         await page.waitForTimeout(2000)
 
         const products = await page.evaluate(() => {
-          const ozCheck = (t: string) => /오즈키즈|OZKIZ|ozkiz/i.test(t.replace(/\s/g, ''))
           // 무신사 랭킹 카드 선택자 (실제 DOM 구조에 맞게 조정)
           const cards = document.querySelectorAll(
             '[class*="RankingCard"], [class*="ranking-card"], .ranking-product, [data-item-type="ranking"]'
@@ -81,7 +79,7 @@ export async function scrapeMusinsa(periods: PeriodKey[]): Promise<RankingSnapsh
               price: parseInt(priceText, 10) || 0,
               imageUrl: imgEl?.src ?? '',
               productUrl: linkEl?.href ?? '',
-              isOzKids: ozCheck(brand) || ozCheck(name),
+              isOzKids: /오즈키즈|OZKIZ|ozkiz/i.test((brand + ' ' + name).replace(/\s/g, '')),
             })
           })
           return items

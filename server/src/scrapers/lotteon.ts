@@ -1,5 +1,4 @@
 import { getBrowser, MODERN_UA, log, makeErrorPath, withRetry } from './base'
-import { isOzKids } from '../types'
 import { computeDeltas } from '../data-store'
 import type { RankingSnapshot, PeriodKey } from '../types'
 
@@ -66,7 +65,6 @@ export async function scrapeLotteon(periods: PeriodKey[]): Promise<RankingSnapsh
         }
 
         const products = await page.evaluate(() => {
-          const ozCheck = (t: string) => /오즈키즈|OZKIZ|ozkiz/i.test(t.replace(/\s/g, ''))
           const cards = document.querySelectorAll(
             '.prd_info, [class*="product-item"], [class*="ProductItem"], .item_info, li[class*="product"]'
           )
@@ -102,7 +100,7 @@ export async function scrapeLotteon(periods: PeriodKey[]): Promise<RankingSnapsh
               price: parseInt(priceText, 10) || 0,
               imageUrl: imgEl?.src ?? '',
               productUrl: linkEl?.href ?? '',
-              isOzKids: ozCheck(brand) || ozCheck(name),
+              isOzKids: /오즈키즈|OZKIZ|ozkiz/i.test((brand + ' ' + name).replace(/\s/g, '')),
             })
           })
           return items.slice(0, 100)

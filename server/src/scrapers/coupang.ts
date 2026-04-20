@@ -1,5 +1,4 @@
 import { getBrowser, MODERN_UA, log, makeErrorPath, withRetry } from './base'
-import { isOzKids } from '../types'
 import { computeDeltas } from '../data-store'
 import type { RankingSnapshot, PeriodKey } from '../types'
 
@@ -44,7 +43,6 @@ export async function scrapeCoupang(periods: PeriodKey[]): Promise<RankingSnapsh
         }
 
         const products = await page.evaluate(() => {
-          const ozCheck = (t: string) => /오즈키즈|OZKIZ|ozkiz/i.test(t.replace(/\s/g, ''))
           const cards = document.querySelectorAll(
             'li.baby-product, [class*="ProductCard"], [class*="product-list"] li, .search-product'
           )
@@ -77,7 +75,6 @@ export async function scrapeCoupang(periods: PeriodKey[]): Promise<RankingSnapsh
             const priceText = priceEl?.textContent?.trim().replace(/[^0-9]/g, '') ?? '0'
             if (!name) return
 
-            const combined = `${brand} ${name}`
             items.push({
               rank: idx + 1,
               productName: name,
@@ -85,7 +82,7 @@ export async function scrapeCoupang(periods: PeriodKey[]): Promise<RankingSnapsh
               price: parseInt(priceText, 10) || 0,
               imageUrl: imgEl?.src ?? '',
               productUrl: linkEl?.href ?? '',
-              isOzKids: ozCheck(brand) || ozCheck(name) || ozCheck(combined),
+              isOzKids: /오즈키즈|OZKIZ|ozkiz/i.test((brand + ' ' + name).replace(/\s/g, '')),
             })
           })
           return items.slice(0, 100)
