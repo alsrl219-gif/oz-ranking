@@ -10,7 +10,7 @@ import {
 import { useRankingStore } from '../store/useRankingStore'
 import { useRankingData } from '../hooks/useRankingData'
 import { CHANNEL_META } from '../types'
-import type { ChannelId, PeriodKey, RankingSnapshot } from '../types'
+import type { ChannelId, PeriodKey, RankingSnapshot, KeywordRankEntry } from '../types'
 import { ChannelLogo } from '../components/ChannelLogo'
 import { API_BASE } from '../config'
 
@@ -73,13 +73,20 @@ function isProductMatch(catalogName: string, channelName: string): boolean {
   return matchCount >= Math.max(1, Math.floor(tokens.length * 0.6))
 }
 
+// 랭킹 페이지 기반 채널 (무신사·보리보리·롯데온·카카오): ozKidsEntries 사용
+// 키워드 검색 기반 채널 (쿠팡·스마트스토어): keyword rank entries 사용
+const KEYWORD_CHANNELS: ChannelId[] = ['coupang', 'smartstore']
+
 function buildChannelRanks(
   product: CatalogProduct,
   snapshots: RankingSnapshot[],
   period: PeriodKey,
+  kwRanks: KeywordRankEntry[],
 ): Partial<Record<ChannelId, ChannelRankInfo>> {
   const ranks: Partial<Record<ChannelId, ChannelRankInfo>> = {}
-  const relevant = snapshots.filter(s => s.period === period)
+
+  // ① 랭킹/베스트 페이지 채널: ozKidsEntries 매칭
+  const relevant = snapshots.filter(s => s.period === period && !KEYWORD_CHANNELS.includes(s.channelId))
   for (const snap of relevant) {
     if (ranks[snap.channelId]) continue
     const matched = snap.ozKidsEntries.find(e => isProductMatch(product.productName, e.productName))
@@ -92,6 +99,26 @@ function buildChannelRanks(
       }
     }
   }
+
+  // ② 키워드 검색 채널: keyword rank entries에서 productName 매칭
+  for (const ch of KEYWORD_CHANNELS) {
+    if (ranks[ch]) continue
+    // 이 상품과 매칭되는 keyword rank 항목 중 최고 순위 선택
+    const matched = kwRanks
+      .filter(e => e.channelId === ch && e.rank !== null && e.productName)
+      .filter(e => isProductMatch(product.productName, e.productName!))
+      .sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999))[0]
+
+    if (matched && matched.rank !== null) {
+      ranks[ch] = {
+        rank: matched.rank,
+        delta: matched.rankDelta,
+        isNew: matched.previousRank === null,
+        productUrl: undefined,
+      }
+    }
+  }
+
   return ranks
 }
 
@@ -293,24 +320,33 @@ export function ProductRanking() {
   const [catalog,        setCatalog]        = useState<CatalogProduct[] | null>(null)
   const [catalogLoading, setCatalogLoading] = useState(true)
   const [catalogError,   setCatalogError]   = useState<string | null>(null)
+  const [kwRanks,        setKwRanks]        = useState<KeywordRankEntry[]>([])
 
   const sentinelRef = useRef<HTMLDivElement>(null)
 
-  // 카탈로그 로드
+  // 카탈로그 + 키워드 랭킹 동시 로드
   useEffect(() => {
     setCatalogLoading(true)
-    fetch(`${API_BASE}/api/catalog`)
-      .then(r => r.ok ? r.json() : r.json().then((e: { error?: string }) => Promise.reject(e.error ?? '오류')))
-      .then((d: { products: CatalogProduct[] }) => { setCatalog(d.products); setCatalogLoading(false) })
+    Promise.all([
+      fetch(`${API_BASE}/api/catalog`)
+        .then(r => r.ok ? r.json() : r.json().then((e: { error?: string }) => Promise.reject(e.error ?? '오류'))),
+      fetch(`${API_BASE}/api/keywords/ranks`)
+        .then(r => r.ok ? r.json() : []).catch(() => []),
+    ])
+      .then(([cd, kd]: [{ products: CatalogProduct[] }, KeywordRankEntry[]]) => {
+        setCatalog(cd.products)
+        setKwRanks(Array.isArray(kd) ? kd : [])
+        setCatalogLoading(false)
+      })
       .catch((e: unknown) => { setCatalogError(String(e)); setCatalogLoading(false) })
   }, [])
 
-  // 채널 순위 병합
+  // 채널 순위 병합 (랭킹 채널: ozKidsEntries / 쿠팡·네이버: keyword ranks)
   const productRows = useMemo<ProductRow[]>(() => {
     if (!catalog) return []
     const snapshots = data?.snapshots ?? []
     return catalog.map(p => {
-      const channelRanks = buildChannelRanks(p, snapshots, period)
+      const channelRanks = buildChannelRanks(p, snapshots, period, kwRanks)
       const ranks = Object.values(channelRanks).map(r => r?.rank ?? Infinity)
       const bestRank = ranks.length ? Math.min(...ranks) : Infinity
       return { ...p, channelRanks, bestRank, scraped: ranks.length > 0 }
@@ -319,7 +355,7 @@ export function ProductRanking() {
       if (!a.scraped && b.scraped) return 1
       return (a.bestRank === Infinity ? 9999 : a.bestRank) - (b.bestRank === Infinity ? 9999 : b.bestRank)
     })
-  }, [catalog, data, period])
+  }, [catalog, data, period, kwRanks])
 
   // 필터 (검색/시즌/카테고리)
   const filtered = useMemo(() => {

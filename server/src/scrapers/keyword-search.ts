@@ -8,6 +8,7 @@ interface SearchResult {
   brandName: string
   price: number
   imageUrl: string
+  productUrl: string
 }
 
 // ─── 채널별 검색 URL ──────────────────────────────────────────────
@@ -16,9 +17,9 @@ function getSearchUrl(channelId: ChannelId, keyword: string): string {
   const q = encodeURIComponent(keyword)
   switch (channelId) {
     case 'coupang':
-      return `https://www.coupang.com/np/search?q=${q}`
+      return `https://www.coupang.com/np/search?q=${q}&channel=user&component=&eventCategory=SRP&trcid=&traid=&sorter=scoreDesc&minPrice=&maxPrice=&priceRange=&filterType=&listSize=36&filter=&isPriceRange=false&brand=&offerCondition=&rating=0&page=1&rocketAll=false&searchIndexingToken=1=6`
     case 'smartstore':
-      return `https://search.shopping.naver.com/search/all?query=${q}`
+      return `https://search.shopping.naver.com/search/all?query=${q}&cat_id=&frm=NVSHATC`
     case 'musinsa':
       return `https://www.musinsa.com/search/goods?q=${q}&storeCode=kids`
     case 'boribori':
@@ -30,66 +31,160 @@ function getSearchUrl(channelId: ChannelId, keyword: string): string {
   }
 }
 
-// ─── 채널별 상품 파싱 ─────────────────────────────────────────────
+// ─── 채널별 결과 파싱 ─────────────────────────────────────────────
 
 async function parseSearchResults(
   page: import('playwright').Page,
   channelId: ChannelId
 ): Promise<SearchResult[]> {
+  await page.waitForTimeout(channelId === 'smartstore' ? 3000 : 2000)
+
   return page.evaluate(
     ({ channelId }: { channelId: ChannelId }) => {
-      let selector = ''
-      switch (channelId) {
-        case 'coupang':
-          selector = 'li.search-product, li[class*="SearchProduct"], .search-product-list li'
-          break
-        case 'smartstore':
-          selector = '[class*="productItem"], [class*="product_item"], .basicList_item__'
-          break
-        case 'musinsa':
-          selector = '[class*="goods-list"] li, [class*="goodsList"] li, .list-box li'
-          break
-        case 'boribori':
-          selector = '.prd_list li, .item_list li, [class*="prd-item"]'
-          break
-        case 'lotteon':
-          selector = '.search_result li, [class*="search-result"] li, [class*="ProductItem"]'
-          break
-        case 'kakao':
-          selector = '[class*="SearchItem"], [class*="search-item"], [class*="ProductItem"]'
-          break
+      const results: Array<{
+        rank: number; productName: string; brandName: string
+        price: number; imageUrl: string; productUrl: string
+      }> = []
+
+      if (channelId === 'coupang') {
+        // 쿠팡: search-product 리스트
+        const cards = document.querySelectorAll(
+          'li.search-product, [class*="search-product-list"] li, ' +
+          '[data-search-id] li, ul[class*="products"] li'
+        )
+        cards.forEach((card, idx) => {
+          if (idx >= 60) return
+          const nameEl = card.querySelector(
+            '[class*="name"], [class*="productName"], .name, ' +
+            'dl dd:first-child, [class*="product-name"]'
+          )
+          const brandEl = card.querySelector('[class*="brand"], [class*="vendor"]')
+          const priceEl = card.querySelector('[class*="price-value"], [class*="priceValue"], strong[class*="price"]')
+          const imgEl   = card.querySelector('img') as HTMLImageElement | null
+          const linkEl  = card.querySelector('a[href]') as HTMLAnchorElement | null
+          const name    = nameEl?.textContent?.trim() ?? ''
+          if (!name || name.length < 2) return
+          results.push({
+            rank: idx + 1,
+            productName: name,
+            brandName: brandEl?.textContent?.trim() ?? '',
+            price: parseInt((priceEl?.textContent ?? '').replace(/[^0-9]/g, '') || '0', 10),
+            imageUrl: imgEl?.src ?? '',
+            productUrl: linkEl?.href ?? '',
+          })
+        })
+
+      } else if (channelId === 'smartstore') {
+        // 네이버쇼핑: 다양한 레이아웃 대응
+        const cards = document.querySelectorAll(
+          '[class*="basicList_item__"], [class*="product_item"], ' +
+          '[class*="ProductItem"], [data-shp-contents-id]'
+        )
+        cards.forEach((card, idx) => {
+          if (idx >= 60) return
+          const nameEl = card.querySelector(
+            '[class*="productName"], [class*="product_name"], ' +
+            '[class*="title"], [class*="tit"]'
+          )
+          const brandEl = card.querySelector(
+            '[class*="brandName"], [class*="brand_name"], ' +
+            '[class*="mall"], [class*="store"]'
+          )
+          const priceEl = card.querySelector('[class*="price_num__"], [class*="priceValue"], strong')
+          const imgEl   = card.querySelector('img') as HTMLImageElement | null
+          const linkEl  = card.querySelector('a[href]') as HTMLAnchorElement | null
+          const name    = nameEl?.textContent?.trim() ?? ''
+          if (!name || name.length < 2) return
+          results.push({
+            rank: idx + 1,
+            productName: name,
+            brandName: brandEl?.textContent?.trim() ?? '',
+            price: parseInt((priceEl?.textContent ?? '').replace(/[^0-9]/g, '') || '0', 10),
+            imageUrl: imgEl?.src ?? '',
+            productUrl: linkEl?.href ?? '',
+          })
+        })
+
+      } else if (channelId === 'musinsa') {
+        const cards = document.querySelectorAll('[class*="goods-list"] li, [class*="goodsList"] li')
+        cards.forEach((card, idx) => {
+          if (idx >= 50) return
+          const nameEl  = card.querySelector('[class*="goods-name"], [class*="goodsName"], .name')
+          const brandEl = card.querySelector('[class*="brand"], .brand')
+          const priceEl = card.querySelector('[class*="price"]')
+          const imgEl   = card.querySelector('img') as HTMLImageElement | null
+          const linkEl  = card.querySelector('a') as HTMLAnchorElement | null
+          const name    = nameEl?.textContent?.trim() ?? ''
+          if (!name) return
+          results.push({
+            rank: idx + 1,
+            productName: name,
+            brandName: brandEl?.textContent?.trim() ?? '',
+            price: parseInt((priceEl?.textContent ?? '').replace(/[^0-9]/g, '') || '0', 10),
+            imageUrl: imgEl?.src ?? '',
+            productUrl: linkEl?.href ?? '',
+          })
+        })
+
+      } else if (channelId === 'boribori') {
+        const cards = document.querySelectorAll('.prd_list li, .item_list li, [class*="prd-item"]')
+        cards.forEach((card, idx) => {
+          if (idx >= 50) return
+          const nameEl  = card.querySelector('[class*="name"], .name, .tit')
+          const brandEl = card.querySelector('[class*="brand"]')
+          const priceEl = card.querySelector('[class*="price"]')
+          const imgEl   = card.querySelector('img') as HTMLImageElement | null
+          const linkEl  = card.querySelector('a') as HTMLAnchorElement | null
+          const name    = nameEl?.textContent?.trim() ?? ''
+          if (!name) return
+          results.push({
+            rank: idx + 1, productName: name,
+            brandName: brandEl?.textContent?.trim() ?? '',
+            price: parseInt((priceEl?.textContent ?? '').replace(/[^0-9]/g, '') || '0', 10),
+            imageUrl: imgEl?.src ?? '', productUrl: linkEl?.href ?? '',
+          })
+        })
+
+      } else if (channelId === 'lotteon') {
+        const cards = document.querySelectorAll('[class*="ProductItem"], [class*="search-result"] li, ul li[class*="item"]')
+        cards.forEach((card, idx) => {
+          if (idx >= 50) return
+          const nameEl  = card.querySelector('[class*="name"], [class*="Name"]')
+          const brandEl = card.querySelector('[class*="brand"], [class*="Brand"]')
+          const priceEl = card.querySelector('[class*="price"], [class*="Price"]')
+          const imgEl   = card.querySelector('img') as HTMLImageElement | null
+          const linkEl  = card.querySelector('a') as HTMLAnchorElement | null
+          const name    = nameEl?.textContent?.trim() ?? ''
+          if (!name) return
+          results.push({
+            rank: idx + 1, productName: name,
+            brandName: brandEl?.textContent?.trim() ?? '',
+            price: parseInt((priceEl?.textContent ?? '').replace(/[^0-9]/g, '') || '0', 10),
+            imageUrl: imgEl?.src ?? '', productUrl: linkEl?.href ?? '',
+          })
+        })
+
+      } else if (channelId === 'kakao') {
+        const cards = document.querySelectorAll('[class*="SearchItem"], [class*="search-item"]')
+        cards.forEach((card, idx) => {
+          if (idx >= 50) return
+          const nameEl  = card.querySelector('[class*="name"], [class*="Name"]')
+          const brandEl = card.querySelector('[class*="brand"], [class*="Brand"]')
+          const priceEl = card.querySelector('[class*="price"], [class*="Price"]')
+          const imgEl   = card.querySelector('img') as HTMLImageElement | null
+          const linkEl  = card.querySelector('a') as HTMLAnchorElement | null
+          const name    = nameEl?.textContent?.trim() ?? ''
+          if (!name) return
+          results.push({
+            rank: idx + 1, productName: name,
+            brandName: brandEl?.textContent?.trim() ?? '',
+            price: parseInt((priceEl?.textContent ?? '').replace(/[^0-9]/g, '') || '0', 10),
+            imageUrl: imgEl?.src ?? '', productUrl: linkEl?.href ?? '',
+          })
+        })
       }
 
-      const cards = document.querySelectorAll(selector)
-      const items: SearchResult[] = []
-
-      cards.forEach((card, idx) => {
-        if (idx >= 50) return
-
-        const nameEl =
-          card.querySelector('[class*="name"i], [class*="title"i], .name, .tit') as HTMLElement | null
-        const brandEl =
-          card.querySelector('[class*="brand"i], [class*="maker"i], .brand') as HTMLElement | null
-        const priceEl =
-          card.querySelector('[class*="price"i], .price') as HTMLElement | null
-        const imgEl = card.querySelector('img') as HTMLImageElement | null
-
-        const name = nameEl?.textContent?.trim() ?? ''
-        const brand = brandEl?.textContent?.trim() ?? ''
-        const priceText = priceEl?.textContent?.trim().replace(/[^0-9]/g, '') ?? '0'
-
-        if (!name) return
-
-        items.push({
-          rank: idx + 1,
-          productName: name,
-          brandName: brand,
-          price: parseInt(priceText, 10) || 0,
-          imageUrl: imgEl?.src ?? '',
-        })
-      })
-
-      return items
+      return results
     },
     { channelId }
   )
@@ -103,37 +198,34 @@ export async function searchKeywordInChannel(
   category: string,
   channelId: ChannelId
 ): Promise<KeywordRankEntry> {
-  const today = new Date().toISOString().slice(0, 10)
+  const today     = new Date().toISOString().slice(0, 10)
   const scrapedAt = new Date().toISOString()
-  const baseEntry: Omit<KeywordRankEntry, 'rank' | 'productName' | 'productImage' | 'price' | 'previousRank' | 'rankDelta'> = {
-    keywordId,
-    keyword,
-    category,
-    channelId,
-    date: today,
-    scrapedAt,
-  }
+  const base = { keywordId, keyword, category, channelId, date: today, scrapedAt }
 
   try {
     const browser = await getBrowser()
-    const context = await browser.newContext({ userAgent: MODERN_UA })
+    const context = await browser.newContext({
+      userAgent: MODERN_UA,
+      extraHTTPHeaders: { 'Accept-Language': 'ko-KR,ko;q=0.9' },
+    })
     const page = await context.newPage()
+
+    // 봇 탐지 우회
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, 'webdriver', { get: () => undefined })
+    })
 
     try {
       const url = getSearchUrl(channelId, keyword)
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 })
-      await page.waitForTimeout(2000)
 
       const results = await parseSearchResults(page, channelId)
-      log('keyword-search', `[${channelId}] "${keyword}": ${results.length}개 결과`)
+      log('keyword-search', `[${channelId}] "${keyword}": ${results.length}개 파싱`)
 
-      // 오즈키즈 상품 필터
-      const ozItem = results.find(
-        (r) => isOzKids(r.brandName) || isOzKids(r.productName)
-      )
+      const ozItem = results.find(r => isOzKids(r.brandName) || isOzKids(r.productName))
 
       return {
-        ...baseEntry,
+        ...base,
         rank: ozItem?.rank ?? null,
         previousRank: null,
         rankDelta: null,
@@ -147,13 +239,9 @@ export async function searchKeywordInChannel(
   } catch (err) {
     log('keyword-search', `[${channelId}] "${keyword}" 오류: ${err}`)
     return {
-      ...baseEntry,
-      rank: null,
-      previousRank: null,
-      rankDelta: null,
-      productName: null,
-      productImage: null,
-      price: null,
+      ...base,
+      rank: null, previousRank: null, rankDelta: null,
+      productName: null, productImage: null, price: null,
     }
   }
 }
@@ -173,12 +261,12 @@ export async function scrapeAllKeywords(
       // 이전 랭킹 계산
       const history = loadKeywordHistory(kw.id, 7)
       const prevEntry = history
-        .filter((h) => h.channelId === channelId && h.rank !== null)
+        .filter(h => h.channelId === channelId && h.rank !== null)
         .sort((a, b) => b.scrapedAt.localeCompare(a.scrapedAt))[0]
 
       if (prevEntry && entry.rank !== null && prevEntry.rank !== null) {
         entry.previousRank = prevEntry.rank
-        entry.rankDelta = prevEntry.rank - entry.rank
+        entry.rankDelta    = prevEntry.rank - entry.rank
       }
 
       results.push(entry)

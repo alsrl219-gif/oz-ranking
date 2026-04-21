@@ -1,145 +1,69 @@
-import { getBrowser, MODERN_UA, log, withRetry, findProductsInJson, normalizeApiProduct } from './base'
+/**
+ * 쿠팡 스크래퍼 — 키워드 검색 기반
+ *
+ * 카테고리 베스트 페이지는 봇 차단이 심해 실용적이지 않음.
+ * 등록된 키워드로 쿠팡 검색 → OZ 키즈 상품 순위 수집.
+ */
+
+import { log } from './base'
 import { computeDeltas } from '../data-store'
-import type { RankingSnapshot, PeriodKey } from '../types'
+import { loadKeywords } from '../keywords-store'
+import { searchKeywordInChannel } from './keyword-search'
+import type { RankingSnapshot, PeriodKey, OzKidsEntry } from '../types'
 
-const CHANNEL = 'coupang'
-// 아동의류 카테고리 - 봇 차단이 덜한 URL 우선 사용
-const URLS = [
-  'https://www.coupang.com/np/categories/487148',
-  'https://m.coupang.com/nm/categories/487148',
-]
-
-const TAB_TEXT: Record<PeriodKey, string> = {
-  realtime: '실시간',
-  daily:    '오늘',
-  weekly:   '이번주',
-  monthly:  '이번달',
-}
+const CHANNEL = 'coupang' as const
 
 export async function scrapeCoupang(periods: PeriodKey[]): Promise<RankingSnapshot[]> {
-  return withRetry(async () => {
-    const browser = await getBrowser()
-    const context = await browser.newContext({
-      userAgent: MODERN_UA,
-      extraHTTPHeaders: {
-        'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-      },
-      viewport: { width: 1280, height: 800 },
-    })
-    const page = await context.newPage()
+  const keywords = loadKeywords().filter(kw => kw.channels.includes(CHANNEL))
 
-    // 봇 탐지 우회: webdriver 속성 제거
-    await page.addInitScript(() => {
-      Object.defineProperty(navigator, 'webdriver', { get: () => undefined })
-      ;(window as any).chrome = { runtime: {} }
-    })
+  if (keywords.length === 0) {
+    log(CHANNEL, '등록된 키워드 없음 — 키워드 랭킹 페이지에서 키워드를 추가하세요')
+    return periods.map(period => ({
+      channelId: CHANNEL, period,
+      scrapedAt: new Date().toISOString(),
+      products: [], ozKidsEntries: [],
+      error: '키워드 미등록. 키워드 랭킹 → 쿠팡 채널 포함 키워드 추가 필요',
+    }))
+  }
 
-    const results: RankingSnapshot[] = []
+  log(CHANNEL, `키워드 ${keywords.length}개로 검색 시작`)
 
+  // 키워드별로 검색 → OZ 키즈 상품 수집 (상품명 기준 최고 순위 유지)
+  const bestByName = new Map<string, OzKidsEntry>()
+
+  for (const kw of keywords) {
     try {
-      const allCaptured: any[][] = []
-      page.on('response', async (res) => {
-        const ct = res.headers()['content-type'] ?? ''
-        if (!ct.includes('json')) return
-        if (/log\.|analytics|gtm|clog|beacon/i.test(res.url())) return
-        try {
-          const json = await res.json()
-          const products = findProductsInJson(json)
-          if (products.length >= 5) {
-            log(CHANNEL, `API 캡처: ${res.url().slice(0, 80)} (${products.length}개)`)
-            allCaptured.push(products)
-          }
-        } catch {}
-      })
-
-      // 봇 차단 시 다음 URL 시도
-      let loaded = false
-      for (const url of URLS) {
-        try {
-          await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 })
-          await page.waitForTimeout(2000)
-          const title = await page.title()
-          if (!title.toLowerCase().includes('access denied') && !title.includes('403')) {
-            log(CHANNEL, `페이지 로드 성공: ${title}`)
-            loaded = true
-            break
-          }
-          log(CHANNEL, `차단됨: ${title}, 다음 URL 시도`)
-        } catch (e) {
-          log(CHANNEL, `URL 오류: ${e}`)
-        }
-      }
-
-      if (!loaded) {
-        return periods.map(period => ({
-          channelId: CHANNEL, period,
-          scrapedAt: new Date().toISOString(),
-          products: [], ozKidsEntries: [],
-          error: '쿠팡 봇 차단 (Access Denied)',
-        }))
-      }
-
-      for (const period of periods) {
-        try {
-          const tabBtn = page.locator(`button:has-text("${TAB_TEXT[period]}"), a:has-text("${TAB_TEXT[period]}")`).first()
-          if (await tabBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-            await tabBtn.click()
-            await page.waitForTimeout(1500)
-          }
-        } catch {}
-
-        let items: any[] = allCaptured.flat()
-
-        if (items.length === 0) {
-          items = await page.evaluate(() => {
-            const results: any[] = []
-            const cards = document.querySelectorAll(
-              '.baby-product, [class*="baby-product"], ' +
-              'ul.baby-product-list > li, ' +
-              '[class*="ProductCard"], [class*="product-item"], ' +
-              'li[class*="product"]'
-            )
-            cards.forEach((card, idx) => {
-              const nameEl = card.querySelector('[class*="name"], [class*="Name"], .name')
-              const priceEl = card.querySelector('[class*="price"], [class*="Price"]')
-              const imgEl = card.querySelector('img') as HTMLImageElement | null
-              const linkEl = card.querySelector('a') as HTMLAnchorElement | null
-              const name = nameEl?.textContent?.trim() ?? ''
-              if (!name) return
-              results.push({
-                rank: idx + 1, name,
-                price: parseInt((priceEl?.textContent ?? '').replace(/[^0-9]/g, '') || '0', 10),
-                imageUrl: imgEl?.src ?? '', productUrl: linkEl?.href ?? '',
-              })
-            })
-            return results
+      const entry = await searchKeywordInChannel(kw.id, kw.keyword, kw.category, CHANNEL)
+      if (entry.rank !== null && entry.productName) {
+        const prev = bestByName.get(entry.productName)
+        if (!prev || entry.rank < prev.rank) {
+          bestByName.set(entry.productName, {
+            rank: entry.rank,
+            productName: entry.productName,
+            price: entry.price ?? 0,
+            imageUrl: entry.productImage ?? undefined,
+            productUrl: undefined,
+            previousRank: entry.previousRank,
+            rankDelta: entry.rankDelta,
+            isNew: entry.previousRank === null,
           })
         }
-
-        const products = items.map((item, i) => normalizeApiProduct(item, i))
-          .filter(p => p.productName.length > 1).slice(0, 100)
-
-        log(CHANNEL, `${period}: ${products.length}개, 오즈키즈 ${products.filter(p => p.isOzKids).length}개`)
-        const ozRaw = products.filter(p => p.isOzKids)
-        results.push({
-          channelId: CHANNEL, period,
-          scrapedAt: new Date().toISOString(),
-          products, ozKidsEntries: computeDeltas(ozRaw, CHANNEL, period),
-        })
       }
-    } catch (err) {
-      log(CHANNEL, `오류: ${err}`)
-      for (const period of periods.slice(results.length)) {
-        results.push({
-          channelId: CHANNEL, period,
-          scrapedAt: new Date().toISOString(),
-          products: [], ozKidsEntries: [], error: String(err),
-        })
-      }
-    } finally {
-      await context.close()
+      log(CHANNEL, `"${kw.keyword}": ${entry.rank !== null ? `${entry.rank}위 (${entry.productName})` : '미발견'}`)
+    } catch (e) {
+      log(CHANNEL, `"${kw.keyword}" 검색 오류: ${e}`)
     }
-    return results
-  }, 1, CHANNEL)
+  }
+
+  const ozRaw = [...bestByName.values()]
+  log(CHANNEL, `수집 완료 — 오즈키즈 ${ozRaw.length}개 상품`)
+
+  // 키워드 검색은 현재 시점 기준 → realtime 스냅샷만 저장
+  // 다른 기간은 같은 데이터를 복사 (의미 동일)
+  return periods.map(period => ({
+    channelId: CHANNEL, period,
+    scrapedAt: new Date().toISOString(),
+    products: [],
+    ozKidsEntries: computeDeltas(ozRaw, CHANNEL, period),
+  }))
 }
