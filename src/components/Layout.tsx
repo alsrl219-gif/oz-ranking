@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { BarChart2, Search, FolderOpen, LayoutDashboard } from 'lucide-react'
+import { BarChart2, Search, FolderOpen, LayoutDashboard, Package } from 'lucide-react'
 
 interface LayoutProps { children: React.ReactNode }
 
@@ -13,6 +13,7 @@ const NAV = [
   {
     section: 'ANALYTICS',
     items: [
+      { to: '/products', end: false, icon: '📦', label: '상품 랭킹',   iconEl: Package },
       { to: '/keywords', end: false, icon: '🏆', label: '키워드 랭킹', iconEl: Search },
       { to: '/history',  end: false, icon: '📈', label: '추이 분석',   iconEl: BarChart2 },
     ],

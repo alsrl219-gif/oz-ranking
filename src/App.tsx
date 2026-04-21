@@ -6,6 +6,7 @@ const Dashboard = lazy(() => import('./pages/Dashboard').then((m) => ({ default:
 const History = lazy(() => import('./pages/History').then((m) => ({ default: m.History })))
 const KeywordRanking = lazy(() => import('./pages/KeywordRanking').then((m) => ({ default: m.KeywordRanking })))
 const DataManagement = lazy(() => import('./pages/DataManagement').then((m) => ({ default: m.DataManagement })))
+const ProductRanking = lazy(() => import('./pages/ProductRanking').then((m) => ({ default: m.ProductRanking })))
 
 function LoadingFallback() {
   return (
@@ -22,6 +23,7 @@ export function App() {
         <Suspense fallback={<LoadingFallback />}>
           <Routes>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/products" element={<ProductRanking />} />
             <Route path="/keywords" element={<KeywordRanking />} />
             <Route path="/data" element={<DataManagement />} />
             <Route path="/history" element={<History />} />
