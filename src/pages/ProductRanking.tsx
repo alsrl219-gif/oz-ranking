@@ -4,7 +4,7 @@ import {
   Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
 import {
-  ExternalLink, TrendingUp, TrendingDown, Minus,
+  TrendingUp, TrendingDown, Minus,
   ChevronDown, ChevronUp, Package, RefreshCw, AlertCircle,
 } from 'lucide-react'
 import { useRankingStore } from '../store/useRankingStore'
@@ -204,7 +204,6 @@ const ProductRowItem = ({ row, isExpanded, onToggle }: {
   isExpanded: boolean
   onToggle: () => void
 }) => {
-  const anyUrl = CHANNELS.map(ch => row.channelRanks[ch]?.productUrl).find(Boolean)
   const rankedCount = CHANNELS.filter(ch => row.channelRanks[ch]).length
 
   return (
@@ -264,20 +263,11 @@ const ProductRowItem = ({ row, isExpanded, onToggle }: {
             ? <span className="text-[12px] font-semibold text-gray-700">{row.price.toLocaleString()}<span className="text-[10px] font-normal text-gray-400 ml-0.5">원</span></span>
             : <span className="text-gray-200 text-[11px]">—</span>}
         </td>
-        {/* 링크 */}
-        <td className="px-3 py-2.5 text-center align-middle w-10">
-          {anyUrl
-            ? <a href={anyUrl} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                className="inline-flex items-center justify-center w-6 h-6 rounded-md hover:bg-gray-100 transition-colors">
-                <ExternalLink size={11} className="text-gray-400" />
-              </a>
-            : <span className="text-gray-200 text-[11px]">—</span>}
-        </td>
       </tr>
       {/* 트렌드 차트 확장 */}
       {isExpanded && (
         <tr className="bg-gradient-to-b from-blue-50/40 to-white border-b border-gray-100">
-          <td colSpan={CHANNELS.length + 4} className="px-6 py-4">
+          <td colSpan={CHANNELS.length + 3} className="px-6 py-4">
             <p className="text-[11px] font-semibold text-gray-400 mb-2">📈 순위 추이 — {row.productName}</p>
             <TrendChart product={row} />
           </td>
@@ -483,13 +473,12 @@ export function ProductRanking() {
                     </th>
                   ))}
                   <th className="px-3 py-2.5 text-right w-20"><span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">가격</span></th>
-                  <th className="px-3 py-2.5 text-center w-10"><span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">링크</span></th>
                 </tr>
               </thead>
               <tbody>
                 {visibleRows.length === 0 ? (
                   <tr>
-                    <td colSpan={CHANNELS.length + 4} className="py-14 text-center">
+                    <td colSpan={CHANNELS.length + 3} className="py-14 text-center">
                       <Package size={28} className="mx-auto mb-2 text-gray-200" />
                       <p className="text-[12px] text-gray-400">검색 결과가 없습니다.</p>
                     </td>
