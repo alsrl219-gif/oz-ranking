@@ -1,69 +1,105 @@
 import { NavLink } from 'react-router-dom'
 import { BarChart2, Search, FolderOpen, LayoutDashboard } from 'lucide-react'
 
-interface LayoutProps {
-  children: React.ReactNode
-}
+interface LayoutProps { children: React.ReactNode }
+
+const NAV = [
+  {
+    section: 'OVERVIEW',
+    items: [
+      { to: '/', end: true, icon: '🏠', label: '대시보드', iconEl: LayoutDashboard },
+    ],
+  },
+  {
+    section: 'ANALYTICS',
+    items: [
+      { to: '/keywords', end: false, icon: '🏆', label: '키워드 랭킹', iconEl: Search },
+      { to: '/history',  end: false, icon: '📈', label: '추이 분석',   iconEl: BarChart2 },
+    ],
+  },
+  {
+    section: 'MANAGEMENT',
+    items: [
+      { to: '/data', end: false, icon: '📂', label: '데이터 관리', iconEl: FolderOpen },
+    ],
+  },
+]
 
 export function Layout({ children }: LayoutProps) {
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#F4F6FA' }}>
+    <div className="flex min-h-screen" style={{ background: '#F4F6FA' }}>
 
-      {/* ── 헤더 ─────────────────────────────────────────────── */}
-      <header className="bg-white sticky top-0 z-20" style={{ borderBottom: '1px solid #EAECF0' }}>
-        <div className="max-w-screen-xl mx-auto px-6 h-14 flex items-center gap-8">
-
-          {/* 로고 */}
-          <div className="flex items-center gap-2.5 flex-shrink-0">
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[11px] font-black"
-              style={{ background: 'linear-gradient(135deg, #FF5043 0%, #FF8A80 100%)' }}
-            >
-              OZ
-            </div>
-            <div className="leading-tight">
-              <p className="text-[14px] font-extrabold text-gray-900 tracking-tight leading-none">
-                오즈키즈
-              </p>
-              <p className="text-[10px] text-gray-400 font-medium tracking-wide leading-none mt-0.5">
-                RANKING MONITOR
-              </p>
-            </div>
+      {/* ── 사이드바 ─────────────────────────────────────────── */}
+      <aside
+        className="fixed top-0 left-0 h-full flex flex-col z-30 select-none"
+        style={{
+          width: 220,
+          background: 'linear-gradient(180deg, #1A1D2E 0%, #1E2139 100%)',
+          borderRight: '1px solid rgba(255,255,255,0.06)',
+        }}
+      >
+        {/* 브랜드 */}
+        <div className="flex items-center gap-3 px-5 py-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+          <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-[13px] font-black flex-shrink-0"
+            style={{ background: 'linear-gradient(135deg, #FF5043 0%, #FF8A80 100%)' }}
+          >
+            OZ
           </div>
-
-          {/* 구분선 */}
-          <div className="h-5 w-px bg-gray-200 flex-shrink-0" />
-
-          {/* 내비게이션 */}
-          <nav className="flex items-center gap-0.5 flex-1">
-            {[
-              { to: '/',         end: true,  icon: LayoutDashboard, label: '대시보드' },
-              { to: '/keywords', end: false, icon: Search,          label: '키워드 랭킹' },
-              { to: '/data',     end: false, icon: FolderOpen,      label: '데이터 관리' },
-              { to: '/history',  end: false, icon: BarChart2,       label: '추이' },
-            ].map(({ to, end, icon: Icon, label }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end={end}
-                className={({ isActive }) =>
-                  `flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[13px] font-semibold transition-all ${
-                    isActive
-                      ? 'bg-orange-50 text-[#FF5043]'
-                      : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-                  }`
-                }
-              >
-                <Icon size={14} />
-                {label}
-              </NavLink>
-            ))}
-          </nav>
+          <div className="leading-tight min-w-0">
+            <p className="text-white font-extrabold text-[13px] tracking-tight truncate">오즈키즈</p>
+            <p className="text-[10px] font-medium tracking-widest truncate" style={{ color: 'rgba(255,255,255,0.35)' }}>
+              RANKING MONITOR
+            </p>
+          </div>
         </div>
-      </header>
 
-      {/* ── 메인 ─────────────────────────────────────────────── */}
-      <main className="max-w-screen-xl mx-auto px-6 py-6">
+        {/* 네비게이션 */}
+        <nav className="flex-1 px-3 py-4 space-y-5 overflow-y-auto">
+          {NAV.map(({ section, items }) => (
+            <div key={section}>
+              <p
+                className="text-[10px] font-bold tracking-widest px-2 mb-2"
+                style={{ color: 'rgba(255,255,255,0.3)' }}
+              >
+                {section}
+              </p>
+              <div className="space-y-0.5">
+                {items.map(({ to, end, icon, label }) => (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    end={end}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold transition-all ${
+                        isActive ? 'active-nav' : 'text-gray-400 hover:text-white hover:bg-white/5'
+                      }`
+                    }
+                    style={({ isActive }) =>
+                      isActive
+                        ? { background: 'rgba(255,80,67,0.15)', color: '#FF7A6D' }
+                        : {}
+                    }
+                  >
+                    <span className="text-base leading-none">{icon}</span>
+                    {label}
+                  </NavLink>
+                ))}
+              </div>
+            </div>
+          ))}
+        </nav>
+
+        {/* 하단 */}
+        <div className="px-5 py-4" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.2)' }}>
+            © 2026 OZ Kids Monitor
+          </p>
+        </div>
+      </aside>
+
+      {/* ── 메인 콘텐츠 ────────────────────────────────────────── */}
+      <main className="flex-1 min-w-0" style={{ marginLeft: 220 }}>
         {children}
       </main>
     </div>
