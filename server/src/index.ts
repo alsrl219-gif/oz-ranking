@@ -16,6 +16,7 @@ import {
 } from './keywords-store'
 import { scrapeAllKeywords } from './scrapers/keyword-search'
 import { upload, loadUploadsMeta, addUploadMeta, deleteUploadMeta } from './upload-handler'
+import { loadCatalog } from './catalog-parser'
 import type { ChannelId, PeriodKey, KeywordCategory, UploadFileType } from './types'
 
 const app = express()
@@ -304,6 +305,16 @@ app.get('/api/debug/:channelId', async (req, res) => {
   } catch (e) {
     res.status(500).json({ error: String(e), capturedApis })
   }
+})
+
+// ─── GET /api/catalog ──────────────────────────────────────────────
+// 업로드된 이지어드민 전체상품목록 파싱 후 반환
+app.get('/api/catalog', (_req, res) => {
+  const products = loadCatalog()
+  if (!products) {
+    return res.status(404).json({ error: '업로드된 전체상품목록 파일이 없습니다.' })
+  }
+  res.json({ count: products.length, products })
 })
 
 // ─── GET /api/channels ─────────────────────────────────────────────
