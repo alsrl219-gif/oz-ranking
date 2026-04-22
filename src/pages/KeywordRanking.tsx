@@ -133,7 +133,7 @@ export function KeywordRanking() {
   const todayStr = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
 
   return (
-    <div className="flex flex-col min-h-screen" style={{ background: '#F1F5F9' }}>
+    <div className="flex flex-col min-h-screen" style={{ background: '#F8FAFC' }}>
 
       {/* ── 페이지 헤더 ────────────────────────────────────────── */}
       <div className="bg-white px-8 py-5 flex items-center justify-between flex-shrink-0"
@@ -157,7 +157,7 @@ export function KeywordRanking() {
           <button
             onClick={() => setShowModal(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-semibold text-white transition-all"
-            style={{ background: '#0F172A' }}>
+            style={{ background: '#FF5043' }}>
             <Plus size={13} />
             키워드 추가
           </button>
@@ -227,7 +227,7 @@ export function KeywordRanking() {
             </div>
           ) : keywords.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-52 gap-3">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: '#F1F5F9' }}>
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: '#F8FAFC' }}>
                 <Tag size={20} className="text-slate-300" />
               </div>
               <p className="text-[14px] font-semibold text-slate-500">등록된 키워드가 없습니다</p>
@@ -235,7 +235,7 @@ export function KeywordRanking() {
               <button
                 onClick={() => setShowModal(true)}
                 className="mt-1 flex items-center gap-1.5 px-4 py-2 rounded-xl text-[13px] font-semibold text-white"
-                style={{ background: '#0F172A' }}
+                style={{ background: '#FF5043' }}
               >
                 <Plus size={13} /> 첫 키워드 추가하기
               </button>

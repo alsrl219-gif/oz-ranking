@@ -30,27 +30,27 @@ const NAV_GROUPS = [
 
 export function Layout({ children }: LayoutProps) {
   return (
-    <div className="flex min-h-screen" style={{ background: '#F1F5F9' }}>
+    <div className="flex min-h-screen" style={{ background: '#F8FAFC' }}>
 
       {/* ── 사이드바 ─────────────────────────────────── */}
       <aside
         className="fixed top-0 left-0 h-full z-30 flex flex-col select-none"
         style={{
           width: 220,
-          background: '#0F172A',
-          borderRight: '1px solid rgba(255,255,255,0.04)',
+          background: '#FFFFFF',
+          borderRight: '1px solid #E2E8F0',
         }}
       >
         {/* 로고 */}
         <div className="flex items-center gap-3 px-5 h-16 flex-shrink-0"
-          style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          style={{ borderBottom: '1px solid #F1F5F9' }}>
           <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[11px] font-black flex-shrink-0"
             style={{ background: 'linear-gradient(135deg, #FF5043, #FF8A6D)' }}>
             OZ
           </div>
           <div>
-            <p className="text-white text-[13px] font-bold tracking-tight leading-none">오즈키즈</p>
-            <p className="text-[9px] font-medium tracking-[0.15em] mt-0.5" style={{ color: '#475569' }}>
+            <p className="text-[13px] font-bold tracking-tight leading-none" style={{ color: '#0F172A' }}>오즈키즈</p>
+            <p className="text-[9px] font-medium tracking-[0.15em] mt-0.5" style={{ color: '#94A3B8' }}>
               RANK MONITOR
             </p>
           </div>
@@ -61,7 +61,7 @@ export function Layout({ children }: LayoutProps) {
           {NAV_GROUPS.map(({ label, items }) => (
             <div key={label}>
               <p className="text-[10px] font-semibold tracking-widest px-2 mb-1.5"
-                style={{ color: '#334155' }}>
+                style={{ color: '#CBD5E1' }}>
                 {label}
               </p>
               <div className="space-y-0.5">
@@ -70,13 +70,11 @@ export function Layout({ children }: LayoutProps) {
                     key={to} to={to} end={end}
                     className={({ isActive }) =>
                       `flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all ${
-                        isActive
-                          ? 'text-white'
-                          : 'hover:bg-white/5'
+                        isActive ? '' : 'hover:bg-slate-50'
                       }`
                     }
                     style={({ isActive }) => isActive
-                      ? { background: 'rgba(255,80,67,0.15)', color: '#FF7A6D' }
+                      ? { background: '#FFF4F3', color: '#FF5043' }
                       : { color: '#64748B' }
                     }
                   >
@@ -99,8 +97,8 @@ export function Layout({ children }: LayoutProps) {
 
         {/* 하단 */}
         <div className="px-5 py-4 flex-shrink-0"
-          style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <p className="text-[10px]" style={{ color: '#1E293B' }}>v1.0 · © 2026 OZ Kids</p>
+          style={{ borderTop: '1px solid #F1F5F9' }}>
+          <p className="text-[10px]" style={{ color: '#CBD5E1' }}>v1.0 · © 2026 OZ Kids</p>
         </div>
       </aside>
 

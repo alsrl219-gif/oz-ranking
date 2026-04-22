@@ -262,7 +262,7 @@ export function Dashboard() {
   const todayStr = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
 
   return (
-    <div className="flex flex-col min-h-screen" style={{ background: '#F1F5F9' }}>
+    <div className="flex flex-col min-h-screen" style={{ background: '#F8FAFC' }}>
 
       {/* ── 페이지 헤더 ──────────────────────────────────────────── */}
       <div className="bg-white px-8 py-5 flex items-center justify-between"
@@ -277,7 +277,7 @@ export function Dashboard() {
           className="flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-semibold transition-all"
           style={isScraping
             ? { background: '#F1F5F9', color: '#94A3B8', border: '1px solid #E2E8F0' }
-            : { background: '#0F172A', color: '#fff', border: '1px solid #0F172A' }}>
+            : { background: '#FF5043', color: '#fff', border: '1px solid #FF5043' }}>
           {isScraping
             ? <><Loader2 size={14} className="animate-spin" /> 수집 중...</>
             : <><RefreshCw size={14} /> 전체 수집</>}

@@ -395,7 +395,7 @@ export function ProductRanking() {
   // ── 로딩/에러 화면 ──
 
   if (catalogLoading) return (
-    <div className="flex-1 flex items-center justify-center" style={{ background: '#F1F5F9' }}>
+    <div className="flex-1 flex items-center justify-center" style={{ background: '#F8FAFC' }}>
       <div className="flex flex-col items-center gap-3">
         <div className="w-7 h-7 rounded-full animate-spin"
           style={{ border: '2px solid #E2E8F0', borderTopColor: '#6366F1' }} />
@@ -405,7 +405,7 @@ export function ProductRanking() {
   )
 
   if (catalogError || !catalog) return (
-    <div className="flex-1 flex items-center justify-center p-8" style={{ background: '#F1F5F9' }}>
+    <div className="flex-1 flex items-center justify-center p-8" style={{ background: '#F8FAFC' }}>
       <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center"
         style={{ border: '1px solid #E2E8F0' }}>
         <AlertCircle size={36} className="mx-auto mb-4 text-amber-400" />
@@ -417,7 +417,7 @@ export function ProductRanking() {
         </p>
         <a href="/data"
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-[13px] font-semibold"
-          style={{ background: '#0F172A' }}>
+          style={{ background: '#FF5043' }}>
           <RefreshCw size={13} />데이터 관리로 이동
         </a>
         {catalogError && <p className="text-[11px] text-red-400 mt-3">{catalogError}</p>}
@@ -428,7 +428,7 @@ export function ProductRanking() {
   // ── 메인 렌더 ──
 
   return (
-    <div className="flex flex-col min-h-screen" style={{ background: '#F1F5F9' }}>
+    <div className="flex flex-col min-h-screen" style={{ background: '#F8FAFC' }}>
 
       {/* ── 페이지 헤더 ────────────────────────────────────────── */}
       <div className="bg-white px-8 py-5 flex items-center justify-between flex-shrink-0"
